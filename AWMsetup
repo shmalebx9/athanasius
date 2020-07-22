@@ -102,3 +102,4 @@ esac
 echo -e "\n making scripts executable" 
 chmod +x $AWMdir/scripts/*
 
+exit

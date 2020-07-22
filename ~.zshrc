@@ -1,2 +1,0 @@
-export AWMdir=
-export AWMdir=

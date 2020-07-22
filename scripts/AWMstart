@@ -1,3 +1,4 @@
+picom --config=/home/caleb/work/athanasius/themes/simeon/configs/picom.conf &
 wal -R &
 AWMbar &
 mmwm > /tmp/mmwm-file

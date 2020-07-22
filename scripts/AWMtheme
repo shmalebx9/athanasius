@@ -68,7 +68,7 @@ ls $AWMdir/themes/"$thistheme"/scripts/ | while read line ; do
         ln -sf $AWMdir/themes/"$thistheme"/scripts/$line $AWMdir/scripts/AWMbar
         echo -e "AWMbar &" >> $AWMdir/scripts/AWMstart
         echo 'BARSCRIPT="TRUE"' >> $AWMdir/themes/current.conf
-        AWMbar &
+        killall AWMbar lemonbar polybar yabar ; AWMbar &
     ;;
     esac
 done
