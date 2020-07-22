@@ -14,6 +14,7 @@ To use athanasius in you own scripts simply source the athanasius configuration 
 To set the current theme type AWMtheme 'themename'
 
 example:
+
     $ AWMtheme leo
 
 #### AWMmenu
@@ -41,7 +42,7 @@ To stop all proccesses initiated by the current theme.
 
     $ AWMthemedown
 
-#### Themes
+# Themes
 To create a theme, simply add the config files you want to a directory in the themes directory. The name of any theme is the name of the directory where config files are stored. Athanasius comes with five basic example themes to demonstrate the basic file structure.
 
 ## Michael
