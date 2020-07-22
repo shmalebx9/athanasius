@@ -5,17 +5,17 @@ Athanasius is a set of bash utilities and themes to handle switching between ric
 
 The included themes make use of lemonbar-xft over polybar or yabar to cut down on system resource usage. Each theme includes a bar which can pull system information seamlessly without prior configuration. The bars update volume and battery in real time without the need for loops or external scripts by reading the output of acpi_listen.
 
-#### Usage
+## Usage
 The setup script will automatically detect your battery, audioservice (pulseaudio or alsa), network interface, and WM and adjust its scripts accordingly.
 
-** AWMtheme
+#### AWMtheme
 
 To set the current theme type AWMtheme 'themename'
 
 example:
     $ AWMtheme leo
 
-** AWMmenu
+#### AWMmenu
 The theme backend rices rofi by pointing to the correct config in a script called 'AWMtheme.' To use it just run:
     $AWMmenu
 
@@ -37,11 +37,11 @@ To stop the current theme and all programs started by the theme
 
     $ AWMthemedown
 #### Themes
-Athanasius comes with five basic example themes.
+To create a theme, simply add the config files you want to a directory in themes. The name of any theme is the name of the directory where config files are stored. Athanasius comes with five basic example themes to demonstrate the basic file structure.
 ## Michael
 ![michael](michael.png)
 ## Simeon
-![simeon]simeon.png)
+![simeon](simeon.png)
 ## Leo
 ![leo](leo.png)
 ## Bruno
@@ -66,7 +66,7 @@ Athanasius comes with five basic example themes.
 Credits
 ------
 
-** Icon Font
+#### Icon Font
 The icon font is created entirely from free icons not made by me. The icon font is made up of the following:
 [RemixIcons](https://remixicon.com/)
 [Picol Icons](http://picol.org/)
@@ -82,12 +82,12 @@ The icon font is created entirely from free icons not made by me. The icon font 
 [Steadysheets](http://steadysets.com/)
 [Other Icons](http://othericons.com/)
 
-** Wallpapers
+#### Wallpapers
 Wallpaper Photo by [eberhard grossgasteiger](https://www.pexels.com/@eberhardgross) from Pexels
 wallpaper Photo by [Min An](https://www.pexels.com/@minan1398?utm_content=attributionCopyText&utm_medium=referral&utm_source=pexels) from Pexels
 Wallpaper Photo by [Anni Roenkae](https://www.pexels.com/@anniroenkae) from Pexels
 Wallpaper by [Dark Indigo](https://www.pexels.com/@darkindigo?utm_content=attributionCopyText&utm_medium=referral&utm_source=pexels) from Pexels
 Wallpaper from [Imgur](https://imgur.com/TS5S3)
 
-** Bar scripts
+#### Bar scripts
 The bar scripts borrow work from [fsfg](https://gitlab.com/fsfg/dotfiles/) and [nan0s7](https://github.com/nan0s7/drowsylemon)
