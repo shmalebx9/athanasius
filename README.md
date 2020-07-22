@@ -62,6 +62,7 @@ To create a theme, simply add the config files you want to a directory in the th
     rofi
 
     xdotool & xprop for michael theme
+    [picom-ibhagwan](https://github.com/ibhagwan/picom) for all but Bruno and Leo
 
 
 #### installation
