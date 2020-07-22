@@ -1,0 +1,1 @@
+amixer sget Master | awk -F ' ' 'NR == 5 {gsub("%""]",""); print substr($4, 2, 3)}'

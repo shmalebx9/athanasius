@@ -1,0 +1,294 @@
+#!/usr/bin/bash
+
+PANEL_FIFO="/tmp/panel-fifo"
+[[ -p $PANEL_FIFO ]] || mkfifo -m 600 "$PANEL_FIFO"
+
+. ~/.config/athanasius/athanasius.conf
+
+FG_PANEL="#e4f3f3" 					
+BG_PANEL="#262626"						
+
+FG2_PANEL="#1e1e1e" 						
+BG2_PANEL="#e9e2e8"	
+
+focus="#e4f3f3"
+focus_bg="#262626"
+
+unfocus="#5b6161"
+unfocus_bg="#262626"
+
+urgent="#ff3333"
+
+occupied="#b6c2c2"
+occupied_bg="#262626"
+ds=("" "" "" "" "" "" "")
+
+
+FONT="Ubuntu:size=13"
+
+# [ICONS]
+
+# Icon font
+ICONS="shmalebcollection:size=14"
+
+# Volume
+VOL1=""
+VOL2=""
+VOLMUTE=""
+
+# Battery
+BATLOW=""
+BATHIGH=""
+BATCHARGE=""
+
+# Ram
+RAM=""
+
+# CPU
+CPU=""
+
+# Wifi
+WIFI1=""
+WIFI2=""
+WIFI3=""
+WIFI4=""
+WIFIOFF=""
+
+# Ative window application Icon
+WINICON=""
+
+# Intervals, how often to fetch info for bar
+RAM_INT="10"
+CPU_INT="2"		# CPU interval must be non-zero for the function to work
+WIFI_INT="10"
+BAT_INT="50"
+
+
+#MMWM workspaces
+Workspaces() {
+while read -t 60 -r wmout || true; do
+    if [[ $wmout =~ ^(([[:digit:]]+:)+[[:digit:]]+ ?)+$ ]]; then
+        read -ra desktops <<< "$wmout" && unset r
+        for desktop in "${desktops[@]}"; do
+            IFS=':' read -r d w m c u <<< "$desktop"
+            fg="%{F$unfocus B$unfocus_bg}"
+            ((w)) && fg="%{F$occupied B$occupied_bg}"
+            ((c)) && fg="%{F$focus B$focus_bg}" 
+      #      || fg="%{F$unfocus B$unfocus_bg}"
+            ((u)) && w+="%{F$urgent}"
+             #r+="[${w/tt/-}] $fg${ds[$d]} "
+             r+="$fg${ds[$d]}"
+        done
+        #r="${r%::*}"
+    fi
+    echo "%{c} $r " 
+done | lemonbar -p -a 32 -u 2 -n "$PANEL_WM_NAME" \
+		-B "$BG_PANEL" \
+		-F "$FG_PANEL" \
+		-U "$focus" \
+		-f "$ICONS" \
+		-g 160x30+15+5 &
+}
+tail -f /tmp/mmwm-file | Workspaces &
+
+Title() {
+xprop -root -spy _NET_ACTIVE_WINDOW | while read -r line ; do
+xprop -id "${line#_NET_ACTIVE_WINDOW\(WINDOW\)\: window id \# }"   WM_CLASS | awk -F '\"' '{print "  '$WINICON' " $2}'
+ done
+}
+
+# Clock and date
+#clock -sf 'S | %a %b %e | %I:%M | ' > "$PANEL_FIFO" &
+Date(){
+while true; do
+	date "+%{c} %a %b %d  |  %I:%M %p "
+	sleep 30
+done
+}
+
+#CPU
+Cpu(){
+	while true ; do
+	 awk '{u=$2+$4; t=$2+$4+$5; if (NR==1){u1=u; t1=t;} else print ($2+$4-u1) * 100 / (t-t1); }' <(grep 'cpu ' /proc/stat) <(sleep "$CPU_INT" ;grep 'cpu ' /proc/stat) | awk '{print "P '$CPU' " int($1+0.5) "%"}'
+	done
+}
+Cpu > "$PANEL_FIFO" &
+
+
+
+# Sound
+# This function is not looped. This functions evaluates the correct alsa volume on first
+# run. This function is mirrored in a separate script. The separate script echoes the
+# same information to the panel fifo when volume is changed via volume keys in sxhkd.
+
+Sound(){
+	VOL=$(AWMgetvolume)
+	if AWMgetmute;
+		then
+			if [ "$VOL" -gt 74 ]; then
+					echo "V $VOL2"
+				else
+					echo "V $VOL1"
+			fi
+	else
+		echo "V $VOLMUTE"
+	fi
+}
+Sound > "$PANEL_FIFO" &
+
+#Wifi
+Wifi(){
+while true ; do
+	WIFISTR=$( iwconfig $INTERFACE | awk -F' ' 'NR == 6 {gsub("Quality=",""); print "scale=3; " $2 "*100"}' | bc | cut -c 1-2 )
+	ESSID=$(iwconfig $INTERFACE | awk -F' ' 'NR == 1 {gsub("ESSID:\"","");gsub("\"",""); print substr($4,1,4)}')
+	if [ "$ESSID" = "ESSI" ]
+		then
+			echo "A $WIFIOFF"
+			if [ "$WNOT" = "FALSE" ] ; then
+				notify-send "Warning: Wifi Disconnected" && WNOT="TRUE"
+			fi
+	elif [ "$WIFISTR" -gt 74 ] ; then
+			echo "A $WIFI4" && WNOT="FALSE"
+	elif [ "$WIFISTR" -gt 49 ] ; then
+			echo "A $WIFI3" && WNOT="FALSE"
+	elif [ "$WIFISTR" -gt 24 ] ; then
+			echo "A $WIFI2" && WNOT="FALSE"
+	else
+			echo "A $WIFI1" && WNOT="FALSE"
+	fi
+	sleep "$WIFI_INT"
+done
+}
+Wifi > "$PANEL_FIFO" &
+
+#Battery
+Battery() {
+while true ; do
+	CHARGING=$(cat /sys/class/power_supply/"$BATTERY"/status)
+	BATPERC=$(cat /sys/class/power_supply/"$BATTERY"/capacity)
+	if [ "$CHARGING" = "Discharging" ] ; then
+				if [ "$BATPERC" -gt 30 ] ; then
+					echo "D $BATHIGH $BATPERC%"
+				else
+					echo "D $BATLOW $BATPERC%"
+				fi
+			else
+		echo "D $BATCHARGE $BATPERC% " 
+	fi
+sleep "$BAT_INT"
+done
+}
+Battery > "$PANEL_FIFO" &
+
+# Ram Usage, this is the low estimate, caches and buffers are not counted
+Ram() {
+while true ; do
+	free -m | awk -F' ' 'NR==2 {print "R '$RAM' " $3 " MB "}'
+sleep "$RAM_INT"
+done
+}
+Ram > "$PANEL_FIFO" &
+
+
+# Parse
+bar() {
+while read -r line ; do
+	case $line in
+		D*)
+			# Battery
+			bat="${line#?}"
+			;;				
+		V*)
+			# Volume
+			vol="${line#?}"
+			;;					
+		A*)
+			# Wifi
+			wifi="${line#?}"
+			;;	
+		R*)
+			#RAM
+			ram="${line#?}"
+			;;
+		P*)
+			#CPU
+			cpu="${line#?}"
+			;;
+	esac
+	printf "%s\n" "%{c}${bat} ${ram} ${cpu} ${vol} ${wifi}"
+done
+}
+
+
+
+# The following function parses the output of `acpi_listen` to update the volume/battery
+# when volume buttons are pressed or battery is plugged in (on laptop)
+
+Acpiparse() {
+while read -r line ; do
+	case $line in
+		ac_adapter*)
+			case $line in
+			*00000000) echo "bat disconnected"
+			BATPERC=$(cat /sys/class/power_supply/"$BATTERY"/capacity)
+				if [ "$BATPERC" -gt 30 ] ; then
+					echo "D $BATHIGH $BATPERC%"
+				else
+					echo "D $BATLOW $BATPERC%"
+				fi
+			;;
+			*00000001) echo "bat connected"
+			BATPERC=$(cat /sys/class/power_supply/"$BATTERY"/capacity)
+			echo "D $BATCHARGE $BATPERC% "
+			;;
+			esac > "$PANEL_FIFO"
+			;;
+		button/mute*)
+			VOL=$(AWMgetvolume)
+			if AWMgetmute; then
+				if [ "$VOL" -gt 74 ]; then
+					echo "V $VOL2"
+				else
+					echo "V $VOL1"
+				fi
+			else
+				echo "V $VOLMUTE"
+			fi
+			;;
+		button/volume*)
+		VOL=$(AWMgetvolume)
+			if AWMgetmute; then
+				if [ "$VOL" -gt 74 ]; then
+					echo "V $VOL2"
+				else
+					echo "V $VOL1"
+				fi
+			else
+			 echo "V $VOLMUTE"
+			fi
+				;;
+		esac > "$PANEL_FIFO"
+done
+}
+
+Acpiparse < <(acpi_listen) &
+
+(\
+bar < "$PANEL_FIFO" | lemonbar -p -a 32 -u 2 -n "$PANEL_WM_NAME" \
+		-B "$BG2_PANEL" \
+		-F "$FG2_PANEL" \
+		-f "$FONT" -f "$ICONS" \
+		-g 295x30+1605+5 & \
+\
+Date | lemonbar -p -a 32 -u 2 -n "$PANEL_WM_NAME" \
+		-B "$BG_PANEL" \
+		-F "$FG_PANEL" \
+		-f "$FONT" -f "$ICONS" \
+		-g 220x30+840+5 & \
+\
+Title | lemonbar -p -a 32 -u 2 -n "$PANEL_WM_NAME" \
+		-B "$BG2_PANEL" \
+		-F "$FG2_PANEL" \
+		-f "$FONT" -f "$ICONS" \
+		-g 150x30+230+5 \
+)

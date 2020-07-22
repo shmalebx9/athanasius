@@ -1,0 +1,104 @@
+#!/usr/bin/bash
+
+rm $(pwd)/athanasius.conf && touch $(pwd)/athanasius.conf
+
+# Get athanasius dir
+AWMdir=$(pwd)
+echo "AWMdir=$AWMdir" >> "$AWMdir/athanasius.conf"
+
+# Get audio service
+audiostat=$(pacmd stat)
+if [[ -n "$audiostat" ]] && [[ "$audiostat" != "No PulseAudio"* ]]
+ then
+	audioservice="pulseaudio"
+	echo 'AUDIOSERVICE="pulseaudio"' >> $AWMdir/athanasius.conf
+	ln -sf $AWMdir/default_scripts/AWMpulseaudioup $AWMdir/scripts/AWMaudioup
+    ln -sf $AWMdir/default_scripts/AWMpulseaudiodown $AWMdir/scripts/AWMaudiodown
+    ln -sf $AWMdir/default_scripts/AWMpulseaudiomute $AWMdir/scripts/AWMaudiomute
+    ln -sf $AWMdir/default_scripts/AWMpulseaudiogetmute $AWMdir/scripts/AWMgetmute
+    ln -sf $AWMdir/default_scripts/AWMpulseaudiogetvolume $AWMdir/scripts/AWMgetvolume
+else
+	audioservice="alsa"
+	echo 'AUDIOSERVICE="alsa"' >> $AWMdir/athanasius.conf
+    ln -sf $AWMdir/default_scripts/AWMalsaup $AWMdir/scripts/AWMaudioup
+    ln -sf $AWMdir/default_scripts/AWMalsadown $AWMdir/scripts/AWMaudiodown
+    ln -sf $AWMdir/default_scripts/AWMalsamute $AWMdir/scripts/AWMaudiomute
+	ln -sf $AWMdir/default_scripts/AWMalsagetvolume $AWMdir/scripts/AWMgetvolume
+	ln -sf $AWMdir/default_scripts/AWMalsanotmuted $AWMdir/scripts/AWMgetmute
+fi
+echo -e "\n Audioservice: $audioservice"
+
+# Get network interface
+interface=$(iwconfig 2>/dev/null | awk '/ESSID/ {print $1}') 
+echo -e "\n Interface: $interface"
+echo "INTERFACE=\"$interface\"" >> $AWMdir/athanasius.conf
+
+# Get battery
+if [[ $(ls /sys/class/power_supply/BAT0/ 2>/dev/null) ]] ; then
+echo "\n Battery BAT0"
+echo 'BATTERY="BAT0"' >> $AWMdir/athanasius.conf
+elif [[ $(ls /sys/class/power_supply/BAT1/ 2>/dev/null) ]] ; then
+echo -e "\n Battery: BAT1"
+echo 'BATTERY="BAT1"' >> $AWMdir/athanasius.conf
+fi
+
+# Use xbacklight to change brightness
+ln -sf $AWMdir/default_scripts/AWMbrightnessup  $AWMdir/scripts/AWMbrightnessup 
+ln -sf $AWMdir/default_scripts/AWMbrightnessdown  $AWMdir/scripts/AWMbrightnessdown
+
+# Get WM
+if pgrep mmwm > /dev/null ; then
+echo "WM=\"mmwm\"" >> $AWMdir/athanasius.conf
+echo " WM is mmwm, good choice"
+elif pgrep bspwm > /dev/null ; then
+echo "WM=\"bspwm\"" >> $AWMdir/athanasius.conf
+echo "WM is bspwm"
+elif pgrep dwm > /dev/null ; then
+echo "WM=\"dwm\"" >> $AWMdir/athanasius.conf
+echo "WM is dwm"
+fi
+
+case $SHELL in
+	*zsh)
+	echo -e "\n shell is zsh"
+	if [[ $(grep "$AWMdir/scripts" $HOME/.zshrc) ]] ; then
+	echo " Athanasius script path already exported"
+	else
+	echo -e "\n export PATH=$PATH:$AWMdir/scripts/" >> $HOME/.zshrc
+	echo -e "\n Athanasius PATH exported to .zshrc"
+	fi
+    if [[ $(grep -x "export AWMdir=$AWMdir" $HOME/.zshrc) ]] ; then
+	echo -e "\n AWMdir already exported"
+    else
+    echo "exporting AWMdir"
+    echo "export AWMdir=$AWMdir" >> $HOME/.zshrc
+    fi
+	;;
+	*bash)
+	echo -e "\n shell is bash"
+		if [[ $(grep "$AWMdir/scripts" $HOME/.bashrc) ]] ; then
+	echo -e "\n Athanasius script path already exported"
+	else
+	echo "export PATH=$PATH:$AWMdir/scripts/" >> $HOME/.bashrc
+	echo -e "\n Athanasius PATH exported to .bashrc"
+	fi
+    if [[ $(grep -x "export AWMdir=$AWMdir" $HOME/.bashrc) ]] ; then
+	echo -e "\n AWMdir already exported"
+    else
+    echo "\n exporting AWMdir"
+    echo -e "export AWMdir=$AWDdir" >> ~.bashrc
+    fi
+esac
+
+    if [[ ! -e "$HOME/.local/share/fonts/shmalebcollection.ttf" ]] ; then
+		echo "installing font"
+		mkdir -p ~/.local/share/fonts
+		cp $AWMdir/font/shmalebcollection.ttf ~/.local/share/fonts/
+		fc-cache -fv
+	else
+	echo " font already installed"
+	fi
+
+echo -e "\n making scripts executable" 
+chmod +x $AWMdir/scripts/*
+

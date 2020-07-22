@@ -1,0 +1,75 @@
+configuration {
+  show-icons: true;
+  icon-theme: "Paper";
+  font: "Ubunut 11";
+  drun-display-format: "{icon} {name}";
+  display-run: "";
+  display-drun: "";
+  modi: "run,drun";
+  sidebar-mode:    true;
+}
+
+* {
+  background-color: #f4fafa;
+  bg-alt: #e9e2e8;
+  fg: #262626;
+  top: #262626;
+  select: #1e1e1e;
+  topfg: #e4f3f3;
+
+  nord-blue-light: #88C0D0;
+
+  border: 0;
+  lines: 12;
+  padding: 0;
+  margin: 0;
+  spacing: 0;
+}
+
+window {
+  	location:	 center;
+	height:		 50%;
+	width:		 22%;
+	border-radius: 10px;
+    sidebar:       "false";
+}
+
+mainbox {
+  children: [inputbar, listview];
+}
+
+listview {
+  columns: 1;
+}
+
+element {
+  padding: 12;
+  orientation: vertical;
+  text-color: @fg;
+}
+
+element selected {
+  background-color: @select;
+  text-color: @nord-blue-light;
+}
+
+inputbar {
+  background-color: @top;
+  children: [prompt, entry];
+  font: "Ubuntu 12";
+  text-color: @topfg;
+}
+
+prompt {
+  background-color: @top;
+  enabled: true;
+  font: "shmalebcollection 14";
+  padding: 12 0 0 12;
+  text-color: @topfg;
+}
+
+entry {
+  background-color: @top;
+  padding: 12;
+  text-color: @topfg;
+}

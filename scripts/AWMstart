@@ -1,0 +1,3 @@
+wal -R &
+AWMbar &
+mmwm > /tmp/mmwm-file

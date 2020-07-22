@@ -1,0 +1,2 @@
+export AWMdir=
+export AWMdir=

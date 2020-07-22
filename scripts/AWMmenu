@@ -1,0 +1,12 @@
+#!/usr/bin/bash
+ . $AWMdir/themes/current.conf
+
+case $1 in
+-w)
+shift
+rofi -dmenu -theme $roficonf "$@"
+;;
+
+*)
+rofi -show drun -theme $roficonf "$@"
+esac

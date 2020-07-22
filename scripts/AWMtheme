@@ -1,0 +1,99 @@
+#!/usr/bin/bash
+
+thistheme="$1"
+
+ . $AWMdir/athanasius.conf
+
+#creat_files
+    if [[ -e "$AWMdir/themes/current.conf" ]] ; then
+    rm $AWMdir/themes/current.conf
+    touch $AWMdir/themes/current.conf
+    fi
+    if [[ -e "$AWMdir/scripts/AWMstart" ]] ; then
+    rm "$AWMdir/scripts/AWMstart"
+    else 
+    touch "$AWMdir/scripts/AWMstart"
+    fi
+
+touch $AWMdir/themes/current.conf
+touch $AWMdir/scripts/AWMstart
+
+
+check_configs(){
+ls $AWMdir/themes/"$thistheme"/configs/ | while read line ; do
+    case $line in
+        *rofi*)
+        echo "found rofi config"
+        echo "roficonf=$AWMdir/themes/$thistheme/configs/$line" >> $AWMdir/themes/current.conf
+        ;;
+        *picom*)
+        echo "found picom config"
+        echo -e "picom --config=$AWMdir/themes/$thistheme/configs/$line &"  >> $AWMdir/scripts/AWMstart
+        echo -e "\n killall picom" >> $AWMdir/themes/"$thistheme"/scripts/down
+        killall picom ; sleep 0.5 ; picom --config=$AWMdir/themes/$thistheme/configs/$line &
+        ;;
+        *yabar*)
+        echo "yabar config found"
+        echo -e "\n yabar -c $AWMdir/themes/$thistheme/configs/$line &"  >> $AWMdir/scripts/AWMstart
+        echo -e "\n killall yabar" >> $AWMdir/themes/"$thistheme"/scripts/down
+        killall yabar AWMbar ; "yabar -c $AWMdir/themes/$thistheme/configs/$line"
+        ;;
+        *polybar*)
+        echo "polybar config found"
+        bars=$(awk -F '/' '{ORS=" "} /\[bar/ {gsub("]",""); print $2}' $AWMdir/themes/$thistheme/configs/$line)
+        echo "found bars $bars"
+        killall polybar AWMbar
+        polybarstart="polybar -c $AWMdir/themes/$thistheme/configs/$line $bars"
+        echo -e "\n $polybarstart &" >> $AWMdir/scripts/AWMstart
+        echo -e "\n killall polybar" >> $AWMdir/themes/"$thistheme"/scripts/down
+        eval $polybarstart &
+    esac
+done
+}
+
+check_elements(){
+wal -i $AWMdir/themes/"$thistheme"/elements/wallpaper.*
+echo -e "wal -R &" >> $AWMdir/scripts/AWMstart
+}
+
+check_scripts(){
+ls $AWMdir/themes/"$thistheme"/scripts/ | while read line ; do
+    case $line in
+        *bar*)
+        if grep 'lemonbar' $AWMdir/themes/"$thistheme"/scripts/$line ; then
+        echo -e "\n killall lemonbar AWMbar" >> $AWMdir/themes/"$thistheme"/scripts/down
+        else 
+        echo -e "\n killall AWMbar" >> $AWMdir/themes/"$thistheme"/scripts/down
+        fi
+        ln -sf $AWMdir/themes/"$thistheme"/scripts/$line $AWMdir/scripts/AWMbar
+        echo -e "AWMbar &" >> $AWMdir/scripts/AWMstart
+        echo 'BARSCRIPT="TRUE"' >> $AWMdir/themes/current.conf
+        AWMbar &
+    ;;
+    esac
+done
+}
+
+create_down(){
+if [[ -e "$AWMdir/themes/"$thistheme"/scripts/down" ]] ; then
+    rm $AWMdir/themes/"$thistheme"/scripts/down
+fi
+
+touch $AWMdir/themes/"$thistheme"/scripts/down
+}
+
+check_wm(){
+    if [[ $WM = "mmwm" ]] ; then
+    echo "mmwm > /tmp/mmwm-file" >> $AWMdir/scripts/AWMstart
+    fi
+}
+
+AWMthemedown
+create_down
+check_configs
+check_elements
+check_scripts
+check_wm
+ln -sf $AWMdir/themes/"$thistheme"/scripts/down $AWMdir/scripts/AWMthemedown
+echo "making sure all scripts are executable"
+chmod +x $AWMdir/scripts/*

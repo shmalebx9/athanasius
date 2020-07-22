@@ -1,0 +1,1 @@
+pamixer --get-volume
