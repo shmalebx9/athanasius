@@ -3,7 +3,7 @@
 PANEL_FIFO="/tmp/panel-fifo"
 [[ -p $PANEL_FIFO ]] || mkfifo -m 600 "$PANEL_FIFO"
 
-. ~/.config/athanasius/athanasius.conf
+. $AWMdir/athanasius.conf
 
 ds=("1" "2" "3" "4" "5" "6" "7")
 
@@ -137,7 +137,7 @@ Sound > "$PANEL_FIFO" &
 #Wifi
 Wifi(){
 while true ; do
-	WIFISTR=$( iwconfig $INTERFACE | awk -F' ' 'NR == 6 {gsub("Quality=",""); print "scale=3; " $2 "*100"}' | bc | cut -c 1-2 )
+	WIFISTR=$( iwconfig $INTERFACE | awk -F' ' 'BEGIN{ sum=0} {gsub("Quality=",""); sum+= $2 * 1.4 } END{ printf "%d\n", sum}' )
 	ESSID=$(iwconfig $INTERFACE | awk -F' ' 'NR == 1 {gsub("ESSID:\"","");gsub("\"",""); print substr($4,1,4)}')
 	if [ "$ESSID" = "ESSI" ]
 		then

@@ -4,7 +4,7 @@
 
 scan() {
 fulllist=$(wpa_cli -i "$INTERFACE" scan >/dev/null; sleep 1; wpa_cli -i "$INTERFACE" scan_results)
-until [[ -n $fulllist ]] ; do
+until grep '[0-9]' <<< $fulllist ; do
 	fulllist=$(wpa_cli -i "$INTERFACE" scan >/dev/null; sleep 1; wpa_cli -i "$INTERFACE" scan_results)
 	echo "scanning"
 done
@@ -24,7 +24,7 @@ open_net_connect() {
 }
 
 psk_network_connect() {
-	psk=$(AWMmenu -w -p "Password for $SSID")
+	psk=$(AWMmenu -d -p "Password for $SSID")
 	wpa_cli -i "$INTERFACE" set_network "$NETNUMBER" psk "$psk"
 	wpa_cli -i "$INTERFACE" enable_network "$NETNUMBER"
 }
@@ -45,7 +45,7 @@ fi
 
 scan
 SAVED=$(wpa_cli list_network | sed '1,2d')
-SELECT=$(echo "$fulllist" | awk -F' ' 'NR>2 {gsub("ESS]","NONE"); split($4, arr, "[[-]"); print arr[2] " " $5}' | AWMmenu -w -p "	select network")
+SELECT=$(echo "$fulllist" | awk -F' ' 'NR>2 {gsub("ESS]","NONE"); split($4, arr, "[[-]"); print arr[2] " " $5}' | AWMmenu -d -p "	select network")
 if [[ -z $SELECT ]]; then
 echo "none selected"
 exit 0

@@ -116,5 +116,5 @@ Wallpaper by [Dark Indigo](https://www.pexels.com/@darkindigo?utm_content=attrib
 Wallpaper from [Imgur](https://imgur.com/TS5S3)
 
 
-#### Bar scripts
-The bar scripts borrow work from [fsfg](https://gitlab.com/fsfg/dotfiles/) and [nan0s7](https://github.com/nan0s7/drowsylemon)
+#### Thanks
+The bar scripts borrow work from [fsfg](https://gitlab.com/fsfg/dotfiles/) and [nan0s7](https://github.com/nan0s7/drowsylemon). Work on rofi menus taken from [CaptainUereka](https://github.com/CaptainEureka).

@@ -1,10 +1,40 @@
 #!/usr/bin/bash
  . $AWMdir/themes/current.conf
 
+usage(){
+    echo -e "\t Usage: AWMmenu [option] \n \n\t -d \t open rofi in dmenu mode \
+    \n\t -n \t open rofi with current theme but no options \
+    \n\t -a \t open rofi with file browser and drun separated \
+    \n\t -t \t open rofi with drun and file-browser together \
+    \n\t -h \t print usage"
+}
+
+
 case $1 in
--w)
+-d)
 shift
 rofi -dmenu -theme $roficonf "$@"
+;;
+
+-n)
+shift
+rofi -theme $roficonf "$@"
+;;
+
+-a)
+shift
+rofi -modi file-browser,drun -show drun -theme $roficonf "$@"
+;;
+
+-t)
+shift
+rofi -show combi -combi-modi "drun,file-browser" -theme $roficonf -display-drun "" -display-file-browser ""
+ "$@"
+;;
+
+-h)
+usage
+exit 0
 ;;
 
 *)

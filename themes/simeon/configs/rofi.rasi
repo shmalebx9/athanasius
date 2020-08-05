@@ -1,74 +1,99 @@
 configuration {
+  font: "Ubuntu 14";
+  drun-display-format: "{name}";
+  dpi: 192;
   show-icons: true;
   icon-theme: "Paper";
-  font: "Ubuntu 12";
-  drun-display-format: "{icon} {name}";
-  display-run: "";
-  display-drun: "";
-  modi: "run,drun";
-  sidebar-mode:    true;
+  modi: "drun";
+  display-drun: "";
+  display-file-browser: "";
+  fixed-num-lines: true;
 }
 
 * {
-  background-color: #20242466;
-  bg-alt: #3B4252;
-  fg: #ECEFF4;
-  top: #9e85af;
-  select: #877296;
-  topfg: #fcf8fe;
+  background: transparent;
+  button: #2d142c;
+  text-color: #ECEFF4;
+  top: #47cdda;
+  background-selected: #47cdda;
+  text-color-t: #262626;
+  border-color: #1e1e1e;
+}
 
-  nord-blue-light: #88C0D0;
-
-  border: 0;
-  lines: 12;
-  padding: 0;
-  margin: 0;
-  spacing: 0;
+* {
+  background-color: transparent;
 }
 
 window {
-  	location:	 west;
-	height:		 1040;
-	width:		 22%;
-	y-offset:    20;
-    sidebar:       "true";
+  fullscreen: true;
+  background-color: @background;
 }
+
 
 mainbox {
-  children: [inputbar, listview];
-}
-
-listview {
-  columns: 1;
-}
-
-element {
-  padding: 12;
-  orientation: vertical;
-  text-color: @fg;
-}
-
-element selected {
-  background-color: @select;
-  text-color: @nord-blue-light;
+  children: [ inputbar, listview, mode-switcher ];
+  margin: 1% 6% 4% 6%;
 }
 
 inputbar {
-  background-color: @top;
-  children: [prompt, entry];
-  text-color: @topfg;
+  children: [ prompt, textbox-prompt-colon, entry ];
+  margin: 4% 26% 1% 26%;
+  border-radius: 50px;
+  background-color: @background-selected;
 }
 
 prompt {
-  background-color: @top;
-  enabled: true;
+  enabled: false;
+}
+
+textbox-prompt-colon {
+  expand: false;
+  str: "";
+  color: rgba(255,255,255,0.3);
+  padding: 1.2% 0% 1% 1%;
+  vertical-align: 0.50;
   font: "shmalebcollection 14";
-  padding: 12 0 0 12;
-  text-color: @topfg;
 }
 
 entry {
-  background-color: @top;
-  padding: 12;
-  text-color: @topfg;
+  expand: true;
+  blink: true;
+  padding: 1%;
+  placeholder: "Rofi Search";
+  placeholder-color: rgba(255,255,255,0.3);
+}
+
+listview {
+  columns: 4;
+  lines: 8;
+  layout: vertical;
+  margin: 2% 3.56% 0% 3.56%;
+  cycle: false;
+}
+
+button {
+  text-color: @text-color;
+  background-color: transparent;
+}
+
+button selected {
+  text-color: @button;
+  background-color: transparent;
+}
+
+element {
+  orientation: vertical;
+  margin: 1% 1.78%;
+  padding: 2.0% 0.67% 2.0% 0.67%;
+  border-radius: 50px;
+}
+
+element selected {
+  background-color: @background-selected;
+  color: @text-color-t;
+  border-radius: 50px;
+}
+
+element-icon {
+  size: 30%;
 }

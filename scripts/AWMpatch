@@ -1,0 +1,106 @@
+#!/usr/bin/bash
+
+
+check_type(){
+case $name in
+    *picom*)
+    KILL="TRUE"
+    PROGRAM="picom"
+    DESTINATION="$HOME/.config/picom.conf"
+    ;;
+    *dunst*)
+    KILL="TRUE"
+    PROGRAM="dunst"
+    DESTINATION="$HOME/.config/dunst/dunstrc"
+    ;;
+    *rofi*)
+    KILL=false
+    PROGRAM="rofi"
+    DESTINATION="$HOME/.config/rofi/config.rasi"
+    ;;
+    *polybar*)
+    mkdir -p "$XDG_CONFIG_HOME/polybar"
+    KILL="TRUE"
+    PROGRAM="polybar"
+    DESTINATION="$XDG_CONFIG_HOME/polbar/$1"
+    ;;
+    *nvim*|*neovim*|init.vim)
+    KILL="FALSE"
+    PROGRAM="nvim"
+    DESTINATION="$XDG_CONFIG_HOME/nvim/init.vim"
+    ;;
+    *vim*)
+    KILL="FALSE"
+    PROGRAM="vim"
+    DESTINATION="$HOME/.vimrc"
+    ;;
+    .*)
+    KILL="FALSE"
+    PROGRAM="UNKNOWN"
+    DESTINATION="$HOME/$name"
+    ;;
+    *rc)
+    KILL="FALSE"
+    PROGRAM="UNKNOWN"
+    if -[[ f "$XDG_CONFIG_HOME/${name%rc*}/$name" ]] ; then
+    DESTINATION="$XDG_CONFIG_HOME/${name%rc*}/$name"
+    else
+    echo "couldn't find destination"
+    exit 1
+    fi
+    ;;
+    *)
+    KILL="FALSE"
+    PROGRAM="UNKNOWN"
+    if [[ -f "$XDG_CONFIG_HOME/$name" ]] ; then
+        DESTINATION="$XDG_CONFIG_HOME/$name"
+    elif [[ -d "$XDG_CONFIG_HOME/${name%.*}" ]] ; then
+        DESTINATION="$XDG_CONFIG_HOME/${name%.*}/$name"
+    else
+    echo "could not find destination directory"
+    exit 1
+    fi
+    ;;   
+
+esac
+echo -e "detected $PROGRAM \nDestination: $DESTINATION"
+}
+
+backup(){
+    if [[ -e $DESTINATION ]] ; then
+    bkupname=$(basename $DESTINATION)$(date +"%Y-%m-%d-%T")
+     cp -v $DESTINATION $AWMdir/backups/$bkupname
+    else
+     echo "noting to back up"
+    fi
+    echo "$bkupname $DESTINATION" >> $AWMdir/backups/manifest.txt
+}
+
+patch(){
+    cp -v $config $DESTINATION
+    if [[ $KILL = "TRUE" ]] ; then
+    killall $PROGRAM
+    setsid $PROGRAM >/dev/null &
+    fi
+
+}
+
+restore(){
+    lastbkup=$(tail -n1 $AWMdir/backups/manifest.txt)
+    set $lastbkup
+    cp -v $AWMdir/backups/$1 $2 && \
+    sed -i '$ d' $AWMdir/backups/manifest.txt
+}
+
+if [[ $1 = "-r" ]] ; then
+restore
+else
+
+config="$(readlink -f $1)"
+name="$1"
+mkdir -p "$AWMdir/backups"
+
+check_type
+backup
+patch
+fi

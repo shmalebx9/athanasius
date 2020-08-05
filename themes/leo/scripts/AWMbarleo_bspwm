@@ -3,7 +3,7 @@
 PANEL_FIFO="/tmp/panel-fifo"
 [[ -p $PANEL_FIFO ]] || mkfifo -m 600 "$PANEL_FIFO" 
 
-. ~/.config/athanasius/athanasius.conf
+. $AWMdir/athanasius.conf
 
 ds=("•" "•" "•" "•" "•" "•" "•")
 
@@ -53,7 +53,111 @@ while read -t 60 -r wmout || true; do
     echo "W$r" 
 done > "$PANEL_FIFO" &
 }
-tail -f /tmp/mmwm-file | Workspaces &
+
+Workspaces_bspwm() {
+	bspc subscribe report | while read -r line ; do
+			# bspwm's state
+			wm=
+			IFS=':'
+			set -- ${line#?}
+			while [ $# -gt 0 ] ; do
+				item=$1
+				name=${item#?}
+				case $item in
+					[mM]*)
+						case $item in
+							m*)
+								# monitor
+								FG=$focus
+								BG=$focus_bg
+								on_focused_monitor=
+								;;
+							M*)
+								# focused monitor
+								FG=$unfocus
+								BG=$unfocus_bg
+								on_focused_monitor=1
+								;;
+						esac
+						# The following marks monitors for multi-monitor setup
+						#[ $num_mon -lt 2 ] && shift && continue
+						#wm="${wm}%{F${FG}}%{B${BG}}%{A:bspc monitor -f ${name}:} ${name} %{A}%{B-}%{F-}"
+						;;
+					[fFoOuU]*)
+					# commented-out lines from here to line 230 are for multi-monitor setup.
+					# the if-tests are needless for a single-monitor configuration.
+						case $item in
+							f*)
+								# free desktop
+								FG=$unfocus
+								BG=$unfocus_bg
+								;;
+							F*)
+					#			if [ "$on_focused_monitor" ] ; then
+									# focused free desktop
+									FG=$focus
+									BG=$focus_bg
+					#			else
+					#				# active free desktop
+					#				FG=$COLOR_FREE_FG
+					#				BG=$COLOR_FREE_BG
+					#				UL=$COLOR_FOCUSED_FREE_BG
+					#			fi
+								;;
+							o*)
+								# occupied desktop
+								FG=$occupied
+								BG=$occupied_bg
+								;;
+							O*)
+					#			if [ "$on_focused_monitor" ] ; then
+									# focused occupied desktop
+									FG=$focus
+									BG=$focus_bg
+					#			else
+					#				# active occupied desktop
+					#				FG=$COLOR_OCCUPIED_FG
+					#				BG=$COLOR_OCCUPIED_BG
+					#				UL=$COLOR_FOCUSED_OCCUPIED_BG
+					#			fi
+								;;
+							u*)
+								# urgent desktop
+								FG=$unfocus
+								BG=$urgent
+								;;
+							U*)
+					#			if [ "$on_focused_monitor" ] ; then
+									# focused urgent desktop
+									FG=$focus
+									BG=$urgent
+					#			else
+					#				# active urgent desktop
+					#				FG=$COLOR_URGENT_FG
+					#				BG=$COLOR_URGENT_BG
+					#				UL=$COLOR_FOCUSED_URGENT_BG
+					#			fi
+								;;
+						esac
+						wm="${wm}%{F${FG}}%{B${BG}}%{A:bspc desktop -f ${name}:} ${name} %{A}%{B-}%{F-}%{-u}"
+						;;
+				esac
+				shift
+			done
+	echo "W$wm"
+done
+}
+
+case "$WM" in
+	bspwm)
+    Workspaces_bspwm > "$PANEL_FIFO" &
+    ;;
+    mmwm)
+    tail -f /tmp/mmwm-file | Workspaces &
+    ;;
+esac
+    
+
 
 Date(){
 while true; do
@@ -64,7 +168,7 @@ done
 
 Wifi(){
 while true; do
-	WIFISTR=$( iwconfig $INTERFACE | awk -F' ' 'BEGIN{ sum=0} {gsub("Quality=",""); sum+= $2 * 1.4 } END{ printf "%d\n", sum}' )
+	WIFISTR=$( iwconfig $INTERFACE | awk -F' ' 'NR == 6 {gsub("Quality=",""); print "scale=3; " $2 "*100"}' | bc | cut -c 1-2 )
 	if [ -n "$WIFISTR" ] ; then
 	 echo "N$WIFISTR%"
 	else
