@@ -15,32 +15,30 @@ To set the current theme type AWMtheme 'themename'
 
 example:
 
-    $ AWMtheme leo
+     AWMtheme leo
+To create a theme simply create a directory in the themes folder and add configs to configs folder. To get a better idea how to create themes, check out the five included themes.
 
 #### AWMmenu
 The theme backend rices rofi by pointing to the correct config in a script called 'AWMtheme.' To use it just run:
-    $ AWMmenu
+      AWMmenu
 
 #### Useful scripts
 To get volume information or change volume
 
      AWMgetvolume
 
-    $ AWMgetmute
+     AWMgetmute
 
-    $ AWMaudioup
+     AWMaudioup
 
-    $ AWMaudiodown
+     AWMaudiodown
 
 These commands are useful in bar scripts or WM configurations since the script will have the desired effect regardless of whether the user is running pulseaudio or alsa.
 
-To change themes
-
-    $ AWMtheme "theme"
 
 To stop all proccesses initiated by the current theme.
 
-    $ AWMthemedown
+     AWMthemedown
 
 # Themes
 To create a theme, simply add the config files you want to a directory in the themes directory. The name of any theme is the name of the directory where config files are stored. Athanasius comes with five basic example themes to demonstrate the basic file structure.
