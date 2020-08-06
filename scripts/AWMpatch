@@ -22,7 +22,7 @@ case $name in
     mkdir -p "$XDG_CONFIG_HOME/polybar"
     KILL="TRUE"
     PROGRAM="polybar"
-    DESTINATION="$XDG_CONFIG_HOME/polbar/$1"
+    DESTINATION="$XDG_CONFIG_HOME/polybar/$1"
     ;;
     *nvim*|*neovim*|init.vim)
     KILL="FALSE"
@@ -80,6 +80,12 @@ patch(){
     cp -v $config $DESTINATION
     if [[ $KILL = "TRUE" ]] ; then
     killall $PROGRAM
+    if [[ $PROGRAM = "polybar" ]] ; then
+        bars=$(awk -F '/' '{ORS=" "} /\[bar/ {gsub("]",""); print $2}' $config)
+        echo "found bars $bars"
+        set $bars
+        polybar $1 >/dev/null 2>&1 &
+    fi
     setsid $PROGRAM >/dev/null 2>&1 &
     fi
 
@@ -97,15 +103,14 @@ mkdir -p /tmp/AWMconfigland
     case $1 in
         *github.com*/blob/*)
         DOWNLINK=$(echo $1 | sed 's,/blob/,/raw/,g')
-        echo "realtest"
         ;;
         *)
         DOWNLINK="$1"
     esac
     echo "Downloading config from $DOWNLINK"
     wget $DOWNLINK -P /tmp/AWMconfigland
-    name="${DOWNLINK##*/}"
-    config="/tmp/AWMconfigland/$name"
+    name="$DOWNLINK"
+    config="/tmp/AWMconfigland/${DOWNLINK##*/}"
     mkdir -p "$AWMdir/backups"
 
     check_type
