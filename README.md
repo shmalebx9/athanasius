@@ -19,12 +19,12 @@ example:
 
 #### AWMmenu
 The theme backend rices rofi by pointing to the correct config in a script called 'AWMtheme.' To use it just run:
-    $AWMmenu
+    $ AWMmenu
 
 #### Useful scripts
 To get volume information or change volume
 
-    $ AWMgetvolume
+     AWMgetvolume
 
     $ AWMgetmute
 
