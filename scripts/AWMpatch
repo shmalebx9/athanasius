@@ -80,7 +80,7 @@ patch(){
     cp -v $config $DESTINATION
     if [[ $KILL = "TRUE" ]] ; then
     killall $PROGRAM
-    setsid $PROGRAM >/dev/null &
+    setsid $PROGRAM >/dev/null 2>&1 &
     fi
 
 }
@@ -92,15 +92,43 @@ restore(){
     sed -i '$ d' $AWMdir/backups/manifest.txt
 }
 
-if [[ $1 = "-r" ]] ; then
-restore
-else
+linkhandler(){
+mkdir -p /tmp/AWMconfigland
+    case $1 in
+        *github.com*/blob/*)
+        DOWNLINK=$(echo $1 | sed 's,/blob/,/raw/,g')
+        echo "realtest"
+        ;;
+        *)
+        DOWNLINK="$1"
+    esac
+    echo "Downloading config from $DOWNLINK"
+    wget $DOWNLINK -P /tmp/AWMconfigland
+    name="${DOWNLINK##*/}"
+    config="/tmp/AWMconfigland/$name"
+    mkdir -p "$AWMdir/backups"
 
-config="$(readlink -f $1)"
-name="$1"
-mkdir -p "$AWMdir/backups"
+    check_type
+    backup
+    patch
+rm -rf /tmp/AWMconfigland
+}
 
-check_type
-backup
-patch
-fi
+case $1 in
+    -r)
+    restore
+    ;;
+
+    http://*|https://*|ftp://*)
+    linkhandler $1
+    ;;
+    *)
+    config="$(readlink -f $1)"
+    name="$1"
+    mkdir -p "$AWMdir/backups"
+
+    check_type
+    backup
+    patch
+;;
+esac
