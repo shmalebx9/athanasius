@@ -4,43 +4,61 @@
 check_type(){
 case $name in
     *picom*)
-    KILL="TRUE"
+    KILL=true
     PROGRAM="picom"
-    DESTINATION="$HOME/.config/picom.conf"
+    DESTINATION="$XDG_CONFIG_HOME/picom.conf"
+    SPECIAL=true
+    ;;
+    *compton*)
+    KILL=true
+    PROGRAM="compton"
+    DESTINATION="$XDG_CONFIG_HOME/compton/compton.conf"
     ;;
     *dunst*)
-    KILL="TRUE"
+    KILL=true
     PROGRAM="dunst"
-    DESTINATION="$HOME/.config/dunst/dunstrc"
+    DESTINATION="$XDG_CONFIG_HOME/dunst/dunstrc"
+    SPECIAL=true
     ;;
     *rofi*)
     KILL=false
     PROGRAM="rofi"
-    DESTINATION="$HOME/.config/rofi/config.rasi"
+    DESTINATION="$XDG_CONFIG_HOME/rofi/config.rasi"
     ;;
     *polybar*)
     mkdir -p "$XDG_CONFIG_HOME/polybar"
-    KILL="TRUE"
+    KILL=true
     PROGRAM="polybar"
-    DESTINATION="$XDG_CONFIG_HOME/polybar/$1"
+    DESTINATION="$XDG_CONFIG_HOME/polybar/$(basename $name)"
+    SPECIAL=true
     ;;
     *nvim*|*neovim*|init.vim)
-    KILL="FALSE"
+    KILL=false
     PROGRAM="nvim"
     DESTINATION="$XDG_CONFIG_HOME/nvim/init.vim"
     ;;
     *vim*)
-    KILL="FALSE"
+    KILL=false
     PROGRAM="vim"
-    DESTINATION="$HOME/.vimrc"
+    DESTINATION="$XDG_CONFIG_HOME/.vimrc"
+    ;;
+    *alacritty*|*alacritty.yaml*)
+    KILL=false
+    PROGRAM="alacritty"
+    DESTINATION="$XDG_CONFIG_HOME/alacritty/alacritty.yaml"
+    ;;
+    *qutebrowser*|*config.py*)
+    PROGRAM="qutebrowser"
+    KILL=false
+    DESTINATION="$XDG_CONFIG_HOME/qutebrowser/config.py"
     ;;
     .*)
-    KILL="FALSE"
+    KILL=false
     PROGRAM="UNKNOWN"
     DESTINATION="$HOME/$name"
     ;;
     *rc)
-    KILL="FALSE"
+    KILL=false
     PROGRAM="UNKNOWN"
     if -[[ f "$XDG_CONFIG_HOME/${name%rc*}/$name" ]] ; then
     DESTINATION="$XDG_CONFIG_HOME/${name%rc*}/$name"
@@ -50,7 +68,7 @@ case $name in
     fi
     ;;
     *)
-    KILL="FALSE"
+    KILL=false
     PROGRAM="UNKNOWN"
     if [[ -f "$XDG_CONFIG_HOME/$name" ]] ; then
         DESTINATION="$XDG_CONFIG_HOME/$name"
@@ -76,19 +94,34 @@ backup(){
     echo "$bkupname $DESTINATION" >> $AWMdir/backups/manifest.txt
 }
 
-patch(){
-    cp -v $config $DESTINATION
-    if [[ $KILL = "TRUE" ]] ; then
-    killall $PROGRAM
-    if [[ $PROGRAM = "polybar" ]] ; then
+special(){
+    case $PROGRAM in
+    polybar)
+        echo "executing special setup commands for polybar"
         bars=$(awk -F '/' '{ORS=" "} /\[bar/ {gsub("]",""); print $2}' $config)
         echo "found bars $bars"
         set $bars
+        killall AWMbar bar lemonbar yabar polybar
         polybar $1 >/dev/null 2>&1 &
-    fi
-    setsid $PROGRAM >/dev/null 2>&1 &
+        ;;
+    dunst)
+        echo "executing special setup commands for dunst"
+        setsid dunst >/dev/null 2>&1 &
+        dunstify -i info "Dunst Restarted"
+        ;;
+    picom)
+        echo "restarting picom"
+        setsid picom >/dev/null 2>&1 &
+        ;;
+    esac
+}
+
+patch(){
+    if [[ $KILL = true ]] ; then
+    killall $PROGRAM
     fi
 
+    cp -v $config $DESTINATION
 }
 
 restore(){
@@ -104,6 +137,20 @@ mkdir -p /tmp/AWMconfigland
         *github.com*/blob/*)
         DOWNLINK=$(echo $1 | sed 's,/blob/,/raw/,g')
         ;;
+        *gitlab.com*/blob/*)
+        DOWNLINK=$(echo $1 | sed 's,/blob/,/raw/,g')
+        ;;
+        *gist.github.com*)
+            case $1 in 
+            *raw*)
+            DOWNLINK="$1"
+            ;;
+            *)
+            echo "AWMpatch cannot generate raw download links from github gists. Please retry using the raw link."
+            exit 1
+            ;;
+            esac
+        ;;
         *)
         DOWNLINK="$1"
     esac
@@ -116,6 +163,9 @@ mkdir -p /tmp/AWMconfigland
     check_type
     backup
     patch
+    if [[ $SPECIAL = true ]] ; then 
+    special 
+    fi
 rm -rf /tmp/AWMconfigland
 }
 
@@ -135,5 +185,10 @@ case $1 in
     check_type
     backup
     patch
+     if [[ $SPECIAL = true ]] ; then 
+     special
+     fi
 ;;
 esac
+
+exit 0

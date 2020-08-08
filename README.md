@@ -18,6 +18,17 @@ example:
      AWMtheme leo
 To create a theme simply create a directory in the themes folder and add configs to configs folder. To get a better idea how to create themes, check out the five included themes.
 
+#### AWMpatch
+
+This utility is useful if you don't want to have your rice stored in the athanasius directory. AWMpatch will patch configs in their respective default locations. AWMpatch takes a link to a file or github/gitlab link or local file and patches your existing config. Old configs are stored in the athanasius backups folder. AWMpatch can also easily revert the most recent changes made to the system. 
+
+To use simply run :
+     AWMpatch 'config'
+     
+     AWMpatch 'github link'
+
+     AWMpatch -r
+
 #### AWMmenu
 The theme backend rices rofi by pointing to the correct config in a script called 'AWMtheme.' To use it just run:
       AWMmenu
