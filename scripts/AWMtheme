@@ -42,11 +42,17 @@ ls $AWMdir/themes/"$thistheme"/configs/ | while read line ; do
         echo "polybar config found"
         bars=$(awk -F '/' '{ORS=" "} /\[bar/ {gsub("]",""); print $2}' $AWMdir/themes/$thistheme/configs/$line)
         echo "found bars $bars"
+            set $bars
+            bar="$1"
         killall polybar AWMbar
-        polybarstart="polybar -c $AWMdir/themes/$thistheme/configs/$line $bars"
+        polybarstart="polybar -c $AWMdir/themes/$thistheme/configs/$line $bar"
         echo -e "\n $polybarstart &" >> $AWMdir/scripts/AWMstart
         echo -e "\n killall polybar" >> $AWMdir/themes/"$thistheme"/scripts/down
         eval $polybarstart &
+        ;;
+        *)
+        AWMpatch "$AWMdir/themes/$thistheme/configs/$line"
+        ;;
     esac
 done
 }

@@ -25,6 +25,7 @@ To create a theme simply create a directory in the themes folder and add configs
 
 This utility is useful if you don't want to have your rice stored in the athanasius directory. AWMpatch will patch configs in their respective default locations. AWMpatch takes a link to a file or github/gitlab link or local file and patches your existing config. Old configs are stored in the athanasius backups folder. AWMpatch can also easily revert the most recent changes made to the system. 
 
+
 To use simply run :
 
      AWMpatch 'config'
@@ -132,4 +133,4 @@ Wallpaper from [Imgur](https://imgur.com/TS5S3)
 
 
 #### Thanks
-The bar scripts borrow work from [fsfg](https://gitlab.com/fsfg/dotfiles/) and [nan0s7](https://github.com/nan0s7/drowsylemon). Work on rofi menus taken from [CaptainUereka](https://github.com/CaptainEureka).
+The bar scripts borrow work from [fsfg](https://gitlab.com/fsfg/dotfiles/) and [nan0s7](https://github.com/nan0s7/drowsylemon). Work on rofi menus taken from [CaptainUereka](https://github.com/CaptainEureka). Most of simeon's dunstrc taken form [Hrqmonteiro](https://github.com/hrqmonteiro)
