@@ -5,7 +5,7 @@ usage(){
     echo -e "\t Usage: AWMmenu [option] \n \n\t -d \t open rofi in dmenu mode \
     \n\t -n \t open rofi with current theme but no options \
     \n\t -a \t open rofi with file browser and drun separated \
-    \n\t -t \t open rofi with drun and file-browser together \
+    \n\t -t \t open rofi with file-browser \
     \n\t -h \t print usage"
 }
 
@@ -26,10 +26,9 @@ shift
 rofi -modi file-browser,drun -show drun -theme $roficonf "$@"
 ;;
 
--t)
+-f)
 shift
-rofi -show combi -combi-modi "drun,file-browser" -theme $roficonf -display-drun "" -display-file-browser ""
- "$@"
+rofi -show file-browser -theme $roficonf "$@"
 ;;
 
 -h)
