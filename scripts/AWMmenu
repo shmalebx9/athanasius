@@ -37,5 +37,5 @@ exit 0
 ;;
 
 *)
-rofi -show drun -theme $roficonf "$@"
+rofi -combi drun,run -show combi -theme $roficonf "$@"
 esac
