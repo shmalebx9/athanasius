@@ -4,7 +4,8 @@ configuration {
   drun-display-format: "{name}";
   display-run: ">>";
   display-drun: ">_";
-  modi: "run,drun";
+  display-combi: ">_";
+  modi: "run,drun,combi";
   sidebar-mode:    true;
 }
 
