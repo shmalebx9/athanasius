@@ -3,7 +3,7 @@
 PANEL_FIFO="/tmp/panel-fifo"
 [[ -p $PANEL_FIFO ]] || mkfifo -m 600 "$PANEL_FIFO" 
 
-. ~/.config/athanasius/athanasius.conf
+. $AWMdir/athanasius.conf
 
 ds=("•" "•" "•" "•" "•" "•" "•")
 
@@ -34,7 +34,7 @@ readonly PANEL_Y=0			#panel offset down
 GEOMETRY="$PANEL_WIDTH"x"$PANEL_HEIGHT"+"$PANEL_X"+"$PANEL_Y"
 
 #MMWM workspaces
-Workspaces() {
+Mworkspaces() {
 while read -t 60 -r wmout || true; do
     if [[ $wmout =~ ^(([[:digit:]]+:)+[[:digit:]]+ ?)+$ ]]; then
         read -ra desktops <<< "$wmout" && unset r
@@ -53,7 +53,56 @@ while read -t 60 -r wmout || true; do
     echo "W$r" 
 done > "$PANEL_FIFO" &
 }
-tail -f /tmp/mmwm-file | Workspaces &
+#tail -f /tmp/mmwm-file | Workspaces &
+
+Bspwmparse(){
+while read -r line ; do
+      wm_infos=""
+      IFS=':'
+      set -- ${line#?}
+      while [ $# -gt 0 ] ; do
+        item=$1
+        name=" ${item#?} "
+        case $item in
+          O*)
+            # focused occupied desktop
+            wm_infos="${wm_infos}%{F$focus}%{B$focus_bg}${name}"
+            ;;
+          F*)
+            # focused free desktop
+            wm_infos="${wm_infos}%{F$focus}%{B$focus_bg}${name}"
+            ;;
+          U*)
+            # focused urgent desktop
+            wm_infos="${wm_infos}%{F$focus}%{B$focus_bg}${name}"
+            ;;
+          o*)
+            # occupied desktop
+            wm_infos="${wm_infos}%{F$occupied}%{B$occupied_bg}${name}"
+            ;;
+          f*)
+            # free desktop
+            wm_infos="${wm_infos}%{F$unfocus}%{B$unfocus_bg}${name}"
+            ;;
+          u*)
+            # urgent desktop
+            wm_infos="${wm_infos}%{F$unfocus}%{B$urgent}${name}"
+            ;;
+        esac
+        shift
+      done
+	echo "W${wm_infos}"
+done
+}
+
+Workspaces(){
+case "$WM" in
+	bspwm)
+	bspc subscribe report | Bspwmparse ;;
+	mmwm)
+	tail -f /tmp/mmwm-file | Mworkspaces ;;
+esac
+}
 
 Date(){
 while true; do
@@ -117,6 +166,7 @@ Date > "$PANEL_FIFO" &
 Wifi > "$PANEL_FIFO" &
 Bat > "$PANEL_FIFO" &
 Sound > "$PANEL_FIFO" &
+Workspaces > "$PANEL_FIFO" &
 
 # Parse
 bar() {
@@ -148,7 +198,7 @@ while read -r line ; do
 			;;
 		W*)
 			# workspaces
-			wm="${line#?}%{B-}%{F-}"
+			wm="${line#?} %{B-}%{F-}"
 			;;
 	esac
 	printf "%s\n" "%{l}${wm} %{c}${sys} %{r}%{B#47cdda F#262626} ${ram} \\ ${cpu} \\ ${vol} \\ ${bat} \\ ${net} %{B-F-}"
