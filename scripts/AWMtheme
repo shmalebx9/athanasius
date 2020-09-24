@@ -89,9 +89,10 @@ touch $AWMdir/themes/"$thistheme"/scripts/down
 }
 
 check_wm(){
-    if [[ $WM = "mmwm" ]] ; then
-    echo "mmwm > /tmp/mmwm-file" >> $AWMdir/scripts/AWMstart
-    fi
+    case $WM in
+    mmwm) echo "mmwm > /tmp/mmwm-file" >> $AWMdir/scripts/AWMstart ;;
+    bspwm) echo "exec bspwm" >> $AWMdir/scripts/AWMstart ;;
+    esac
 }
 
 AWMthemedown
