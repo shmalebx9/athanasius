@@ -82,13 +82,9 @@ while read -t 60 -r wmout || true; do
         #r="${r%::*}"
     fi
     echo "%{c} $r " 
-done | lemonbar -p -a 32 -u 2 -n "$PANEL_WM_NAME" \
-		-B "$BG_PANEL" \
-		-F "$FG_PANEL" \
-		-U "$focus" \
-		-f "$ICONS" \
-		-g 160x30+15+5 &
+done
 }
+
 Bspwmparse(){
 while read -r line ; do
       wm_infos=""
