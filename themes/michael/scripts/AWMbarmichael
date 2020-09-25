@@ -65,7 +65,7 @@ BAT_INT="50"
 
 
 #MMWM workspaces
-Workspaces() {
+Mworkspaces() {
 while read -t 60 -r wmout || true; do
     if [[ $wmout =~ ^(([[:digit:]]+:)+[[:digit:]]+ ?)+$ ]]; then
         read -ra desktops <<< "$wmout" && unset r
@@ -89,7 +89,60 @@ done | lemonbar -p -a 32 -u 2 -n "$PANEL_WM_NAME" \
 		-f "$ICONS" \
 		-g 160x30+15+5 &
 }
-tail -f /tmp/mmwm-file | Workspaces &
+Bspwmparse(){
+while read -r line ; do
+      wm_infos=""
+      IFS=':'
+      set -- ${line#?}
+      while [ $# -gt 0 ] ; do
+        item=$1
+        name=" ${item#?} "
+        case $item in
+          O*)
+            # focused occupied desktop
+            wm_infos="${wm_infos}%{F$focus}%{B$focus_bg}${name}"
+            ;;
+          F*)
+            # focused free desktop
+            wm_infos="${wm_infos}%{F$focus}%{B$focus_bg}${name}"
+            ;;
+          U*)
+            # focused urgent desktop
+            wm_infos="${wm_infos}%{F$focus}%{B$focus_bg}${name}"
+            ;;
+          o*)
+            # occupied desktop
+            wm_infos="${wm_infos}%{F$occupied}%{B$occupied_bg}${name}"
+            ;;
+          f*)
+            # free desktop
+            wm_infos="${wm_infos}%{F$unfocus}%{B$unfocus_bg}${name}"
+            ;;
+          u*)
+            # urgent desktop
+            wm_infos="${wm_infos}%{F$unfocus}%{B$urgent}${name}"
+            ;;
+        esac
+        shift
+      done
+	echo "W${wm_infos}"
+done
+}
+
+Workspaces(){
+case "$WM" in
+	bspwm)
+	sleep 1 ; bspc subscribe report | Bspwmparse ;;
+	mmwm)
+	tail -f /tmp/mmwm-file | Mworkspaces ;;
+esac
+}
+Workspaces | lemonbar -p -a 32 -u 2 -n "$PANEL_WM_NAME" \
+		-B "$BG_PANEL" \
+		-F "$FG_PANEL" \
+		-U "$focus" \
+		-f "$ICONS" \
+		-g 160x30+15+5 &
 
 Title() {
 xprop -root -spy _NET_ACTIVE_WINDOW | while read -r line ; do

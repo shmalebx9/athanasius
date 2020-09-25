@@ -70,7 +70,7 @@ readonly PANEL_Y=0			#panel offset down
 GEOMETRY="$PANEL_WIDTH"x"$PANEL_HEIGHT"+"$PANEL_X"+"$PANEL_Y"
 
 #MMWM workspaces
-Workspaces() {
+Mworkspaces() {
 while read -t 60 -r wmout || true; do
     if [[ $wmout =~ ^(([[:digit:]]+:)+[[:digit:]]+ ?)+$ ]]; then
         read -ra desktops <<< "$wmout" && unset r
@@ -89,7 +89,56 @@ while read -t 60 -r wmout || true; do
     echo "W $r" 
 done > "$PANEL_FIFO" &
 }
-tail -f /tmp/mmwm-file | Workspaces &
+
+Bspwmparse(){
+while read -r line ; do
+      wm_infos=""
+      IFS=':'
+      set -- ${line#?}
+      while [ $# -gt 0 ] ; do
+        item=$1
+        name=" ${item#?} "
+        case $item in
+          O*)
+            # focused occupied desktop
+            wm_infos="${wm_infos}%{F$focus}%{B$focus_bg}${name}"
+            ;;
+          F*)
+            # focused free desktop
+            wm_infos="${wm_infos}%{F$focus}%{B$focus_bg}${name}"
+            ;;
+          U*)
+            # focused urgent desktop
+            wm_infos="${wm_infos}%{F$focus}%{B$focus_bg}${name}"
+            ;;
+          o*)
+            # occupied desktop
+            wm_infos="${wm_infos}%{F$occupied}%{B$occupied_bg}${name}"
+            ;;
+          f*)
+            # free desktop
+            wm_infos="${wm_infos}%{F$unfocus}%{B$unfocus_bg}${name}"
+            ;;
+          u*)
+            # urgent desktop
+            wm_infos="${wm_infos}%{F$unfocus}%{B$urgent}${name}"
+            ;;
+        esac
+        shift
+      done
+	echo "W${wm_infos}"
+done
+}
+
+Workspaces(){
+case "$WM" in
+	bspwm)
+	sleep 1 ; bspc subscribe report | Bspwmparse ;;
+	mmwm)
+	tail -f /tmp/mmwm-file | Mworkspaces ;;
+esac
+}
+Workspaces > "$PANEL_FIFO" &
 
 
 # Clock and date
