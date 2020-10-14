@@ -61,7 +61,7 @@ while read -r line ; do
       set -- ${line#?}
       while [ $# -gt 0 ] ; do
         item=$1
-        name=" ${item#?} "
+        name=" • "
         case $item in
           O*)
             # focused occupied desktop
@@ -158,7 +158,29 @@ Cpu(){
 	done
 }
 
+Device_view(){
+while read -r line ; do
+set -- $line
+    case $line in
+    connected:*)
+    echo 'U[|-] \\'
+    ;;
+    disconnected:*)
+    echo 'U'
+    ;;
+    mounted:*)
+    echo "U%{A:u $2:}[M|-] \\%{A}"
+    ;;
+    unmounted:*)
+    echo "U%{A:m $2:}[U|-] \\%{A}"
+    ;;
+	Syncing:*)
+	echo 'U[S|-] \\'
+    esac
+done > "$PANEL_FIFO"
+}
 
+tail -F /tmp/mounter-info | Device_view &
 Cpu > "$PANEL_FIFO" &
 Ram > "$PANEL_FIFO" &
 Date > "$PANEL_FIFO" &
@@ -199,8 +221,11 @@ while read -r line ; do
 			# workspaces
 			wm="${line#?} %{B-}%{F-}"
 			;;
+		U*)
+			device="${line#?}"
+			;;
 	esac
-	printf "%s\n" "%{l}${wm} %{c}${sys} %{r}%{B#47cdda F#262626} ${ram} \\ ${cpu} \\ ${vol} \\ ${bat} \\ ${net} %{B-F-}"
+	printf "%s\n" "%{l}${wm} %{c}${sys} %{r}%{B#47cdda F#262626} ${device} ${ram} \\ ${cpu} \\ ${vol} \\ ${bat} \\ ${net} %{B-F-}"
 done
 }
 
@@ -258,3 +283,4 @@ bar < "$PANEL_FIFO" \
 		-F "$FG_PANEL" \
 		-f "$FONT" -f "Hack:size=11" \
 		-g "$GEOMETRY" \
+	> /tmp/mounter-receive
