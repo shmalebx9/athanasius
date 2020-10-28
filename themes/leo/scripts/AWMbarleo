@@ -128,6 +128,9 @@ while true; do
 	BATPERC=$(cat /sys/class/power_supply/"$BATTERY"/capacity)
 	if [ "$CHARGING" = "Discharging" ] ; then
 		echo "D$BATPERC%"
+			if [ $BATPERC -lt 10 ] ; then
+				notify-send "WARNING: Low Battery"
+			fi
 			else
 		echo "D[$BATPERC%]" 
 	fi
