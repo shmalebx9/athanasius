@@ -39,6 +39,7 @@ To use simply run :
 #### AWMmenu
 The theme backend rices rofi by pointing to the correct config in a script called 'AWMtheme.' To use it just run:
       AWMmenu
+You can specify the type of menu you would like with command line flags (`-h` to see the list of options). This allows you to easily bind keys to simple commands that will always follow changes to your rofi theme. The menu script includes a file quick-launch function with the `-f` flag. The quick launcher looks through paths specified in the `searchpaths` file in the main directory. You must populate the searchlist by typing `gennew` the first time you run the file launcher. By default, the file-viewer uses my [opener script](https://github.com/shmalebx9/boethius) but it can be changed to `exo-open` for pleb-compatibility.
 
 #### Useful scripts
 To get volume information or change volume
@@ -134,3 +135,4 @@ Wallpaper from [Imgur](https://imgur.com/TS5S3)
 
 #### Thanks
 The bar scripts borrow work from [fsfg](https://gitlab.com/fsfg/dotfiles/) and [nan0s7](https://github.com/nan0s7/drowsylemon). Work on rofi menus taken from [CaptainUereka](https://github.com/CaptainEureka). Most of simeon's dunstrc taken form [Hrqmonteiro](https://github.com/hrqmonteiro)
+The file viewer in AWMmenu is mostly taken from salman-abedin's [bolt](https://github.com/salman-abedin/bolt)
