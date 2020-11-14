@@ -6,14 +6,67 @@ usage(){
     \n\t -n \t open rofi with current theme but no options \
     \n\t -a \t open rofi with file browser and drun separated \
     \n\t -t \t open rofi with file-browser \
+    \n\t\t\t * type 'gennew' if file view shows now results  \
     \n\t -h \t print usage"
 }
 
+getconfig() {
+   while IFS= read -r line; do
+      case $line in
+         [[:alnum:]]* | /*) echo "$line" ;;
+      esac
+   done < "$1"
+}
+
+generate() {
+   getconfig $AWMdir/searchpaths |
+      xargs -I% find % -maxdepth 6 > /tmp/searchlist
+}
+
+Dircheck() {
+	if [ -d "$1" ] ; then
+		Dirsearch "$1"
+	elif [ -z "$1" ] ; then
+		exit 1
+	else
+		printf "%q\n" "$1" | xargs -I% opener % 
+	fi
+}
+
+Dirsearch() {
+	 prefix="$1"
+	 selected=$(ls $1 | rofi -dmenu -theme $roficonf -sort true -sorting-method fzf -i -p Open)
+	 	if [ -z "$selected" ] ; then
+			exit 1
+		fi
+	 Dircheck "$prefix/$selected"
+}
+
+filesearch() {
+	echo $1
+      RESULT=$(grep "$1" /tmp/searchlist | head -1)
+      if [ "$1" = "gennew" ] ; then
+      	echo "generating new list"
+      	generate
+      elif [ -z $RESULT ] ; then
+      	echo "none selected" ; exit 1
+      elif [ -d $RESULT ]; then
+      	Dirsearch $(grep "$1" /tmp/searchlist)
+      else
+      	printf "%q\n" "$RESULT" | xargs -I% opener % #replace opener with 'exo-open if you face trouble'
+  	  fi
+}
+
+Search(){
+   	query=$(awk -F / '{print $(NF-1)"/"$NF}' /tmp/searchlist |
+      rofi -dmenu -theme $roficonf -sort true -sorting-method fzf -i -p Open)
+     filesearch "$query" 
+}
 
 case $1 in
 -d)
 shift
-rofi -dmenu -theme $roficonf "$@"
+rofi -dmenu "$@" -theme $roficonf
 ;;
 
 -n)
@@ -28,7 +81,7 @@ rofi -modi file-browser,drun -show drun -theme $roficonf "$@"
 
 -f)
 shift
-rofi -show file-browser -theme $roficonf "$@"
+Search
 ;;
 
 -h)
