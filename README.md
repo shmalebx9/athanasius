@@ -26,7 +26,7 @@ To create a theme simply create a directory in the themes folder and add configs
 This utility is useful if you don't want to have your rice stored in the athanasius directory. AWMpatch will patch configs in their respective default locations. AWMpatch takes a link to a file or github/gitlab link or local file and patches your existing config. Old configs are stored in the athanasius backups folder. AWMpatch can also easily revert the most recent changes made to the system. 
 
 
-To use simply run :
+To use simply run one of the following:
 
      AWMpatch 'config'
      
@@ -37,8 +37,8 @@ To use simply run :
 ![Alt Text](patchexample.gif)
 
 #### AWMmenu
-The theme backend rices rofi by pointing to the correct config in a script called 'AWMtheme.' To use it just run:
-      AWMmenu
+The theme backend rices rofi by pointing to the correct config in a script called 'AWMtheme.' To use it just run `AWMmenu`
+
 You can specify the type of menu you would like with command line flags (`-h` to see the list of options). This allows you to easily bind keys to simple commands that will always follow changes to your rofi theme. The menu script includes a file quick-launch function with the `-f` flag. The quick launcher looks through paths specified in the `searchpaths` file in the main directory. You must populate the searchlist by typing `gennew` the first time you run the file launcher. By default, the file-viewer uses my [opener script](https://github.com/shmalebx9/boethius) but it can be changed to `exo-open` for pleb-compatibility.
 
 #### Useful scripts
