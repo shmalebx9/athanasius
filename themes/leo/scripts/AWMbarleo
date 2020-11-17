@@ -8,19 +8,22 @@ PANEL_FIFO="/tmp/panel-fifo"
 ds=("•" "•" "•" "•" "•" "•" "•")
 
 #colours
-focus="#262626"
-focus_bg="#47cdda"
+focus="#ebf0f2"
+focus_bg="#4c9090"
 
 unfocus="#ebf0f2"
-unfocus_bg="#2e2c2e"
+unfocus_bg="#242838"
 
 urgent="#ff3333"
 
 occupied="#ebf0f2"
-occupied_bg="#424142"
+occupied_bg="#81b1b1"
+
+indicatorbg="#4c9090"
+indicatorfg="#ebf0f2"
 
 FG_PANEL="#ebf0f2" 						# Panel's text colour
-BG_PANEL="#2e2c2e"						# Panel's background colour
+BG_PANEL="#242838"						# Panel's background colour
 
 FONT="Terminus:size=11"
 
@@ -31,7 +34,7 @@ readonly PANEL_WIDTH=1920
 readonly PANEL_HEIGHT=35
 readonly PANEL_X=0		#panel offset to the right
 readonly PANEL_Y=0			#panel offset down
-GEOMETRY="$PANEL_WIDTH"x"$PANEL_HEIGHT"+"$PANEL_X"+"$PANEL_Y"
+GEOMETRY=x"$PANEL_HEIGHT"+"$PANEL_X"+"$PANEL_Y"
 
 #MMWM workspaces
 Mworkspaces() {
@@ -63,6 +66,19 @@ while read -r line ; do
         item=$1
         name=" • "
         case $item in
+			[mM]*)
+				case $item in
+					*HDMI*)
+						# external
+						wm_infos="${wm_infos}%{S-}"
+						;;
+					*eDP*)
+						# primary
+						wm_infos="${wm_infos}%{S+}"
+						;;
+					esac
+					;;
+
           O*)
             # focused occupied desktop
             wm_infos="${wm_infos}%{F$focus}%{B$focus_bg}${name}"
@@ -129,7 +145,7 @@ while true; do
 	if [ "$CHARGING" = "Discharging" ] ; then
 		echo "D$BATPERC%"
 			if [ $BATPERC -lt 10 ] ; then
-				notify-send "WARNING: Low Battery"
+				dunstify -i battery-caution "WARNING: Low Battery"
 			fi
 			else
 		echo "D[$BATPERC%]" 
@@ -228,7 +244,7 @@ while read -r line ; do
 			device="${line#?}"
 			;;
 	esac
-	printf "%s\n" "%{l}${wm} %{c}${sys} %{r}%{B#47cdda F#262626} ${device} ${ram} \\ ${cpu} \\ ${vol} \\ ${bat} \\ ${net} %{B-F-}"
+	printf "%s\n" "%{l}${wm} %{c}${sys} %{r}%{B$indicatorbg F$indicatorfg} ${device} ${ram} \\ ${cpu} \\ ${vol} \\ ${bat} \\ ${net} %{B-F-}"
 done
 }
 
