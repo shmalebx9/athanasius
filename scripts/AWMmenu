@@ -5,8 +5,9 @@ usage(){
     echo -e "\t Usage: AWMmenu [option] \n \n\t -d \t open rofi in dmenu mode \
     \n\t -n \t open rofi with current theme but no options \
     \n\t -a \t open rofi with file browser and drun separated \
-    \n\t -t \t open rofi with file-browser \
-    \n\t\t\t * type 'gennew' if file view shows now results  \
+    \n\t -f \t open rofi with file-browser \
+    \n\t -fg \t update file index for file-browser \
+    \n\t\t\t * type 'gennew' if file-browser shows now results  \
     \n\t -h \t print usage"
 }
 
@@ -82,6 +83,11 @@ rofi -modi file-browser,drun -show drun -theme $roficonf "$@"
 -f)
 shift
 Search
+;;
+
+-fg)
+shift
+generate && echo "new list created"
 ;;
 
 -h)
