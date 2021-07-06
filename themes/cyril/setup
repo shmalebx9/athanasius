@@ -1,0 +1,33 @@
+#!/usr/bin/bash
+
+echo "checking runtime dependencies"
+if [[ ! $(wal -v) ]] ; then
+	echo "	pywal found"
+else
+	echo -e "\e[31mError: pywal not found\e[0m"
+fi
+
+if [[ $(lemonbar -h) ]] ; then
+	echo "	lemonbar found, note that the xft version is needed"
+else
+	echo -e "\e[31mError: lemonbar not found\e[0m"
+fi
+
+AWMthemedown
+
+echo -e "\n symlinking  theme to startup"
+ln -sf ~/.config/athanasius/themes/cyril/cyril_main ~/.config/athanasius/scripts/AWMstart
+ln -sf ~/.config/athanasius/themes/cyril/scritps/down ~/.config/athanasius/scripts/AWMthemedown
+ln -sf ~/.config/athanasius/themes/cyril/scritps/AWMbarcyril ~/.config/athanasius/scripts/AWMbar
+ln -sf ~/.config/athanasius/themes/cyril/scritps/menu_cyril ~/.config/athanasius/scripts/AWMmenu
+
+echo -e "\n making sure startup scripts are executable"
+chmod +x ~/.config/athanasius/scripts/*
+
+echo -e "\n starting theme now"
+
+wal -i ~/.config/athanasius/themes/cyril/elements/enter.jpg 
+AWMbar &
+ 
+exit
+

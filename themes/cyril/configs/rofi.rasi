@@ -1,0 +1,69 @@
+configuration {
+  show-icons: false;
+  font: "Terminus 11";
+  drun-display-format: "{name}";
+  display-run: ">>";
+  display-drun: ">_";
+  modi: "run,drun";
+  sidebar-mode:    true;
+}
+
+* {
+  background-color: #2e2c2e;
+  fg: #ECEFF4;
+  top: #47cdda;
+  select: #47cdda;
+  topfg: #262626;
+
+  border: 0;
+  lines: 12;
+  padding: 0;
+  margin: 0;
+  spacing: 0;
+}
+
+window {
+  	location:	 northwest;
+	height:		 35%;
+	width:		 22%;
+	x-offset:    190;
+    sidebar:       "true";
+}
+
+mainbox {
+  children: [inputbar, listview];
+}
+
+listview {
+  columns: 1;
+}
+
+element {
+  padding: 12;
+  orientation: vertical;
+  text-color: @fg;
+}
+
+element selected {
+  background-color: @select;
+  text-color: @topfg;
+}
+
+inputbar {
+  background-color: @top;
+  children: [prompt, entry];
+  text-color: @topfg;
+}
+
+prompt {
+  background-color: @top;
+  enabled: true;
+  padding: 10 0 0 10;
+  text-color: @topfg;
+}
+
+entry {
+  background-color: @top;
+  padding: 11px;
+  text-color: @topfg;
+}

@@ -1,0 +1,10 @@
+#!/usr/bin/bash
+case $1 in
+-w)
+shift
+rofi -dmenu -theme /home/caleb/.config/athanasius/themes/leo/configs/rofi.rasi "$@"
+;;
+
+*)
+rofi -show drun -theme /home/caleb/.config/athanasius/themes/leo/configs/rofi.rasi
+esac

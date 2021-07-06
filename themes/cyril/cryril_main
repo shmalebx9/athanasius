@@ -1,0 +1,6 @@
+#!/usr/bin/bash
+
+# autostart
+wal -R
+AWMbar &
+exec bspwm
