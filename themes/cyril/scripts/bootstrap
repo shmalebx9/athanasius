@@ -1,0 +1,2 @@
+wget 'https://github.com/AT-UI/feather-font/raw/master/src/fonts/feather.ttf' -P ~/.local/share/fonts/
+fc-cache

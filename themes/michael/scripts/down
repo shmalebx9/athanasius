@@ -1,0 +1,4 @@
+
+ killall picom
+
+ killall lemonbar AWMbar

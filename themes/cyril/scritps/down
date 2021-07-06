@@ -1,5 +1,0 @@
-#!/usr/bin/bash
-
-#kill all processes started by leo_main
-killall lemonbar AWMbar
-exit

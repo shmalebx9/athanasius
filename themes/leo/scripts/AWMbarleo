@@ -144,8 +144,8 @@ while true; do
 	BATPERC=$(cat /sys/class/power_supply/"$BATTERY"/capacity)
 	if [ "$CHARGING" = "Discharging" ] ; then
 		echo "D$BATPERC%"
-			if [ $BATPERC -lt 10 ] ; then
-				dunstify -i battery-caution "WARNING: Low Battery"
+			if [ $BATPERC -lt 15 ] ; then
+				echo "D%{B$urgent}WARDING $BATPERC"
 			fi
 			else
 		echo "D[$BATPERC%]" 
@@ -293,13 +293,11 @@ done
 
 Acpiparse < <(acpi_listen) &
 
-
-
-
 bar < "$PANEL_FIFO" \
 	| lemonbar -p -a 32 -u 2 \
 		-B "$BG_PANEL" \
 		-F "$FG_PANEL" \
 		-f "$FONT" -f "Hack:size=11" \
 		-g "$GEOMETRY" \
-	> /tmp/mounter-receive
+	> /tmp/mounter-receive &
+ sleep 2 && xdo above -t $(xdo id -n root) $(xdo id -n lemonbar) &

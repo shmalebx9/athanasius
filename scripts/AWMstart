@@ -1,4 +1,3 @@
 wal -R &
 AWMbar &
-AWMmenu -fg &
 exec bspwm

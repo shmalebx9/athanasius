@@ -1,0 +1,281 @@
+#!/usr/bin/bash
+
+PANEL_FIFO="/tmp/panel-fifo"
+rm $PANEL_FIFO ; mkfifo -m 600 "$PANEL_FIFO" 
+
+. $AWMdir/athanasius.conf
+
+ds=("1" "2" "3" "4" "5" "6" "7")
+
+# colours stolen from https://github.com/kaibakev1984/Lorblak-Dotfiles
+
+FG_PANEL="#b5b8bc" 						# Panel's text colour
+BG_PANEL="#36394c"						# Panel's background colour
+
+# Bar
+focus="#bf616a"
+unfocus="$FG_PANEL"
+urgent="#d08770"
+occupied="#ebcb8b"
+
+# Indicators
+memc="#198c8c"
+cpuc="#9540e4"
+volc="#81a1c1"
+batc="#d08770"
+netc="#ebcb8b"
+clockc="$focus"
+
+FONT="Terminus:size=11" 
+spacer="%{B-}%{F-}%{u-} "
+
+
+### Geometry
+readonly PANEL_WIDTH=1920
+readonly PANEL_HEIGHT=35
+readonly PANEL_X=0		#panel offset to the right
+readonly PANEL_Y=0			#panel offset down
+GEOMETRY=x"$PANEL_HEIGHT"+"$PANEL_X"+"$PANEL_Y"
+
+#MMWM workspaces
+Mworkspaces() {
+while read -t 60 -r wmout || true; do
+    if [[ $wmout =~ ^(([[:digit:]]+:)+[[:digit:]]+ ?)+$ ]]; then
+        read -ra desktops <<< "$wmout" && unset r
+        for desktop in "${desktops[@]}"; do
+            IFS=':' read -r d w m c u <<< "$desktop"
+            fg="%{F$unfocus B$unfocus_bg}"
+            ((w)) && fg="%{F$occupied B$occupied_bg}"
+            ((c)) && fg="%{F$focus B$focus_bg}" 
+      #      || fg="%{F$unfocus B$unfocus_bg}"
+            ((u)) && w+="%{F$urgent}"
+             #r+="[${w/tt/-}] $fg${ds[$d]} "
+             r+="$fg ${ds[$d]} "
+        done
+        #r="${r%::*}"
+    fi
+    echo "W$r" 
+done > "$PANEL_FIFO" &
+}
+
+Bspwmparse(){
+while read -r line ; do
+      wm_infos=""
+      IFS=':'
+      set -- ${line#?}
+      while [ $# -gt 0 ] ; do
+        item=$1
+        name=${item#?}
+        case $item in
+			[mM]*)
+				case $item in
+					*HDMI*)
+						# external
+						wm_infos="${wm_infos}%{S-}"
+						;;
+					*eDP*)
+						# primary
+						wm_infos="${wm_infos}%{S+}"
+						;;
+					esac
+					;;
+
+          O*)
+            # focused occupied desktop
+            wm_infos="${wm_infos}%{F$focus}%{U$focus}%{+u} ${name} %{-u}"
+            ;;
+          F*)
+            # focused free desktop
+            wm_infos="${wm_infos}%{F$focus}%{U$focus}%{+u} ${name} %{-u}"
+            ;;
+          U*)
+            # focused urgent desktop
+            wm_infos="${wm_infos}%{F$focus}%{U$focus}%{+u} ${name} %{-u}"
+            ;;
+          o*)
+            # occupied desktop
+            wm_infos="${wm_infos}%{F$occupied} ${name} "
+            ;;
+          f*)
+            # free desktop
+            wm_infos="${wm_infos}%{F$unfocus} ${name} "
+            ;;
+          u*)
+            # urgent desktop
+            wm_infos="${wm_infos}%{F$unfocus}%{B$urgent}  ${name}  "
+            ;;
+        esac
+        shift
+      done
+	echo "W${wm_infos}"
+done
+}
+
+Workspaces(){
+case "$WM" in
+	bspwm)
+	sleep 1 ; bspc subscribe report | Bspwmparse ;;
+	mmwm)
+	tail -f /tmp/mmwm-file | Mworkspaces ;;
+esac
+}
+
+Date(){
+while true; do
+	date "+S%a %b %d | %I:%M %p"
+	sleep 30
+done
+}
+
+Wifi(){
+while true; do
+	WIFISTR=$( iwconfig $INTERFACE | awk -F' ' 'BEGIN{ sum=0} {gsub("Quality=",""); sum+= $2 * 1.4 } END{ printf "%d\n", sum}' )
+	if [ -n "$WIFISTR" ] && [ $WIFISTR -gt 0 ] ; then
+  echo "N $WIFISTR%"
+	else
+		echo "N"
+	fi
+	sleep 5
+done
+}
+
+Bat(){
+	CHARGING=$(cat /sys/class/power_supply/"$BATTERY"/status)
+	BATPERC=$(cat /sys/class/power_supply/"$BATTERY"/capacity)
+	if [ "$CHARGING" = "Discharging" ] ; then
+		echo "D $BATPERC%"
+			if [ $BATPERC -lt 15 ] ; then
+				echo "D%{B$urgent}%{U$urgent}%{+u}WARNING $BATPERC%{-u}"
+			fi
+			else
+		echo "D $BATPERC%" 
+	fi
+sleep 50
+}
+
+Ram() {
+while true ; do
+	free -m | awk -F' ' 'NR==2 {print "R " $3 "MB"}'
+sleep 3
+done
+}
+
+Cpu(){
+	while true ; do
+	 awk '{u=$2+$4; t=$2+$4+$5; if (NR==1){u1=u; t1=t;} else print ($2+$4-u1) * 100 / (t-t1); }' <(grep 'cpu ' /proc/stat) <(sleep 2 ;grep 'cpu ' /proc/stat) | awk '{print "P " int($1+0.5) "%"}'
+	done
+}
+
+Device_view(){
+while read -r line ; do
+set -- $line
+    case $line in
+    connected:*)
+    echo 'U[|-] \\'
+    ;;
+    disconnected:*)
+    echo 'U'
+    ;;
+    mounted:*)
+    echo "U%{A:u $2:}[M|-] \\%{A}"
+    ;;
+    unmounted:*)
+    echo "U%{A:m $2:}[U|-] \\%{A}"
+    ;;
+	Syncing:*)
+	echo 'U[S|-] \\'
+    esac
+done > "$PANEL_FIFO"
+}
+
+Sound(){
+	VOL=$(AWMgetvolume)
+	if AWMgetmute;
+		then
+		echo "V $VOL%"
+	else
+		echo "V $VOL%"
+	fi
+}
+
+tail -F /tmp/mounter-info | Device_view &
+Cpu > "$PANEL_FIFO" &
+Ram > "$PANEL_FIFO" &
+Date > "$PANEL_FIFO" &
+Wifi > "$PANEL_FIFO" &
+( while true ; do Bat ; sleep 60 ; done ) > "$PANEL_FIFO" &
+Sound > "$PANEL_FIFO" &
+Workspaces > "$PANEL_FIFO" &
+
+# Parse
+bar() {
+while read -r line ; do
+	case $line in
+		S*)
+			# clock output
+			sys="%{F$clockc}%{U$clockc}%{+u} ${line#?} %{F-}%{-u}"
+			;;
+		N*)
+			# wifi
+   net="%{F$netc}%{U$netc}%{+u}${line#?}%{F-}%{-u}"
+			;;
+		D*)
+			# battery
+   bat="%{F$batc}%{U$batc}%{+u}${line#?}%{F-}%{-u}"
+			;;
+		V*)
+			# volume
+   vol="%{F$volc}%{U$volc}%{+u}${line#?}%{F-}%{-u}"
+			;;
+		R*)
+			# memory
+			ram="%{F$memc}%{U$memc}%{+u}${line#?}%{F-}%{-u}"
+			;;
+		P*)
+			# cpu
+			cpu="%{F$cpuc}%{U$cpuc}%{+u}${line#?}%{F-}%{-u}"
+			;;
+		W*)
+			# workspaces
+			wm="${line#?} %{B-}%{F-}"
+			;;
+		U*)
+			device="${line#?}%{F-}$spacer"
+			;;
+	esac
+	printf "%s\n" "%{l}${wm} %{c}${sys} %{r}${device}${ram}$spacer${cpu}$spacer${vol}$spacer${bat}$spacer${net}  %{B-F-}"
+done
+}
+
+Acpiparse() {
+while read -r line ; do
+	case $line in
+		ac_adapter*)
+			case $line in
+			*00000000)
+			BATPERC=$(cat /sys/class/power_supply/"$BATTERY"/capacity)
+				echo "D$BATPERC%"
+			;;
+			*00000001)
+			BATPERC=$(cat /sys/class/power_supply/"$BATTERY"/capacity)
+				echo "D[$BATPERC%]"
+			;;
+			esac > "$PANEL_FIFO"
+			;;
+		button*volume*|button/mute*)
+    Sound
+				;;
+		esac > "$PANEL_FIFO"
+done
+}
+
+Acpiparse < <(acpi_listen) &
+
+bar < "$PANEL_FIFO" \
+	| lemonbar -p -a 32 -u 2 \
+		-B "$BG_PANEL" \
+		-F "$FG_PANEL" \
+		-o -0 -f "$FONT" -o 1 -f "Feather:size=12" \
+		-g "$GEOMETRY" \
+	> /tmp/mounter-receive 2>/dev/null &
+ sleep 2 && xdo above -t $(xdo id -n root) $(xdo id -n lemonbar) &

@@ -102,5 +102,6 @@ check_elements
 check_scripts
 check_wm
 ln -sf $AWMdir/themes/"$thistheme"/scripts/down $AWMdir/scripts/AWMthemedown
+ln -sf $AWMdir/themes/"$thistheme"/scripts/soundupdate /$AWMdir/scripts/AWMsoundupdate
 echo "making sure all scripts are executable"
 chmod +x $AWMdir/scripts/*

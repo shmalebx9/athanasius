@@ -1,19 +1,20 @@
 configuration {
   show-icons: false;
-  font: "Terminus 11";
+  font: "Terminus 14";
   drun-display-format: "{name}";
   display-run: ">>";
   display-drun: ">_";
-  modi: "run,drun";
+  display-combi: ">_";
+  modi: "run,drun,combi";
   sidebar-mode:    true;
 }
 
 * {
-  background-color: #2e2c2e;
-  fg: #ECEFF4;
-  top: #47cdda;
-  select: #47cdda;
-  topfg: #262626;
+  background-color: #202432;
+  fg: #b7d2d2;
+  top: #242838;
+  select: #242838;
+  topfg: #b7d2d2;
 
   border: 0;
   lines: 12;
