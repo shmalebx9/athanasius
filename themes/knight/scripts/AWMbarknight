@@ -1,0 +1,274 @@
+#!/bin/dash
+
+PANEL_FIFO="/tmp/panel-fifo"
+[ -p $PANEL_FIFO ] || mkfifo -m 600 "$PANEL_FIFO"
+
+. $AWMdir/athanasius.conf
+
+#colours
+focus="#191919"
+focus_bg="#ebf0f2"
+
+unfocus="#ebf0f2"
+unfocus_bg="#191919"
+
+urgent="#ff3333"
+
+occupied="#ebf0f2"
+occupied_bg="#2f2f2f"
+
+indicatorbg="#191919"
+indicatorfg="#ebf0f2"
+
+FG_PANEL="#ebf0f2"                                              # Panel's text colour
+BG_PANEL="#191919"                                              # Panel's background colour
+
+FONT="Terminus:size=11"
+
+### Geometry
+readonly PANEL_WIDTH=1440
+readonly PANEL_HEIGHT=27
+readonly PANEL_X=0              #panel offset to the right
+readonly PANEL_Y=0                      #panel offset down
+GEOMETRY=x"$PANEL_HEIGHT"+"$PANEL_X"+"$PANEL_Y"
+
+
+Cpu(){
+Cpu_grep(){
+ grep 'cpu ' /proc/stat ; sleep 2 ; grep 'cpu ' /proc/stat
+}
+
+Cpu_parse(){
+  awk '{u=$2+$4; t=$2+$4+$5; if (NR==1){u1=u; t1=t;} else print ($2+$4-u1) * 100 / (t-t1); }' |\
+  awk '{print "P " int($1+0.5) "%"}'
+}
+
+while true ; do
+ Cpu_grep | Cpu_parse
+done
+}
+
+Temp(){
+while true ; do
+awk '{print "T" substr($1,0,length($1)-3) "°"}' /sys/class/thermal/thermal_zone0/temp
+ sleep 5
+done
+}
+
+Date(){
+while true; do
+        date "+S %a %b %d | %I:%M %p "
+        sleep 30
+done
+}
+
+
+Wifi(){
+while true; do
+        WIFISTR=$( iwconfig $INTERFACE | awk -F' ' 'BEGIN{ sum=0} {gsub("Quality=",""); sum+= $2 * 1.4 } END{ printf "%d\n", sum}' )
+        if [ -n "$WIFISTR" ] ; then
+         echo "N $WIFISTR%"
+        else
+                echo "NNONE"
+        fi
+        sleep 5
+done
+}
+
+Bat_once(){
+        CHARGING=$(cat /sys/class/power_supply/BAT0/status)
+        CHARGING1=$(cat /sys/class/power_supply/BAT1/status)
+        BATPERC=$(cat /sys/class/power_supply/BAT0/capacity)
+        BATPERC1=$(cat /sys/class/power_supply/BAT1/capacity)
+        if [ ! "$CHARGING" = "Discharging" ] && [ ! "$CHARGING1" = "Discharging" ] ; then
+		if [ "$CHARGING" = "Charging" ] ; then
+                echo "D %{+u}$BATPERC%{-u} / $BATPERC1"
+		elif [ "$CHARGING1" = "Charging" ] ; then
+                echo "D $BATPERC / %{+u}$BATPERC1%{-u}"
+		else
+                echo "D $BATPERC / $BATPERC1"
+		fi
+                        else
+                echo "D $BATPERC / $BATPERC1"
+                        if [ $BATPERC -lt 15 ] ; then
+                                echo "D%{B$urgent}WARDING $BATPERC $BATPERC1"
+                        fi
+        fi
+}
+
+Bat(){
+while true ; do
+	Bat_once
+	sleep 50
+done
+}
+
+Sound(){
+        VOL=`AWMgetvolume`
+        if AWMgetmute >/dev/null;
+                then
+                echo "V $VOL%"
+        else
+                echo "V $VOL"
+        fi
+}
+
+Ram() {
+while true ; do
+        free -m | awk -F' ' 'NR==2 {print "R " $3 "MB"}'
+sleep 3
+done
+}
+
+Bspwmparse(){
+while read -r line ; do
+      wm_infos=""
+      IFS=':'
+      set -- ${line#?}
+      while [ $# -gt 0 ] ; do
+        item=$1
+        name=" ${item#?} "
+        case $item in
+                        [mM]*)
+                                case $item in
+                                        *HDMI*)
+                                                # external
+                                                wm_infos="${wm_infos}%{S-}"
+                                                ;;
+                                        *eDP*)
+                                                # primary
+                                                wm_infos="${wm_infos}%{S+}"
+                                                ;;
+                                        esac
+                                        ;;
+          O*)
+            # focused occupied desktop
+            wm_infos="${wm_infos}%{F$focus}%{B$focus_bg}${name}"
+            ;;
+          F*)
+            # focused free desktop
+            wm_infos="${wm_infos}%{F$focus}%{B$focus_bg}${name}"
+            ;;
+          U*)
+            # focused urgent desktop
+            wm_infos="${wm_infos}%{F$focus}%{B$focus_bg}${name}"
+            ;;
+          o*)
+            # occupied desktop
+            wm_infos="${wm_infos}%{F$occupied}%{B$occupied_bg}${name}"
+            ;;
+          f*)
+            # free desktop
+            wm_infos="${wm_infos}%{F$unfocus}%{B$unfocus_bg}${name}"
+            ;;
+          u*)
+            # urgent desktop
+            wm_infos="${wm_infos}%{F$unfocus}%{B$urgent}${name}"
+            ;;
+        esac
+        shift
+      done
+        echo "W${wm_infos}"
+done
+}
+
+sleep 0.5 ; bspc subscribe report | Bspwmparse > $PANEL_FIFO &
+Cpu > "$PANEL_FIFO" &
+Ram > "$PANEL_FIFO" &
+Date > "$PANEL_FIFO" &
+Wifi > "$PANEL_FIFO" &
+Bat > "$PANEL_FIFO" &
+Sound > "$PANEL_FIFO" &
+Temp > "$PANEL_FIFO" &
+
+bar() {
+while read -r line ; do
+        case $line in
+		T*)
+			# temperature
+			temp="${line#?}"
+			;;
+                S*)
+                        # clock output
+                        sys="${line#?}%{B-}%{F-}"
+                        ;;
+                N*)
+                        # wifi
+                        net="${line#?}"
+                        ;;
+                D*)
+                        # battery
+                        bat="${line#?}"
+                        ;;
+                V*)
+                        # volume
+                        vol="${line#?}"
+                        ;;
+                R*)
+                        # memory
+                        ram="${line#?}"
+                        ;;
+                P*)
+                        # cpu
+                        cpu="${line#?}"
+                        ;;
+                W*)
+                        # workspaces
+                        wm="${line#?} %{B-}%{F-}"
+                        ;;
+                U*)
+                        device="${line#?}"
+                        ;;
+        esac
+        printf "%s\n" "%{l}${wm} %{c}${sys} %{r}%{B$indicatorbg F$indicatorfg} ${device} ${ram} /${cpu} / ${temp} ${vol} ${bat} ${net} %{B-F-}"
+done
+}
+
+Acpiparse() {
+while read -r line ; do
+        case $line in
+                ac_adapter*)
+			sleep 1
+			Bat_once
+			sleep 5
+			Bat_once
+                        ;;
+                button/mute*)
+                        VOL=`AWMgetvolume`
+                        if AWMgetmute; then
+                                echo "V $VOL%"
+                        else
+                                echo "V $VOL"
+                        fi
+                        ;;
+                button/volumeup*)
+                VOL=`AWMgetvolume`
+                        if AWMgetmute; then
+                                echo "V $VOL%"
+                        else
+                                echo "V $VOL"
+                        fi
+                                ;;
+                button/volumedown*)
+                VOL=`AWMgetvolume`
+                        if AWMgetmute; then
+                                echo "V $VOL%"
+                        else
+                                echo "V $VOL"
+                        fi
+                                ;;
+                esac > "$PANEL_FIFO"
+done
+}
+
+acpi_listen | Acpiparse &
+
+bar < "$PANEL_FIFO" \
+        | lemonbar -p -a 32 -u 2 \
+                -B "$BG_PANEL" \
+                -F "$FG_PANEL" \
+		-U "$FG_PANEL" \
+                -f "$FONT" \
+		-f "shmalebcollection:size=12" \
+                -g "$GEOMETRY" \
+ sleep 2 && xdo above -t $(xdo id -n root) $(xdo id -n lemonbar) &
