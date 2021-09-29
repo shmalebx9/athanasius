@@ -76,24 +76,26 @@ done
 }
 
 Bat_once(){
-        CHARGING=$(cat /sys/class/power_supply/BAT0/status)
-        CHARGING1=$(cat /sys/class/power_supply/BAT1/status)
-        BATPERC=$(cat /sys/class/power_supply/BAT0/capacity)
-        BATPERC1=$(cat /sys/class/power_supply/BAT1/capacity)
-        if [ ! "$CHARGING" = "Discharging" ] && [ ! "$CHARGING1" = "Discharging" ] ; then
-		if [ "$CHARGING" = "Charging" ] ; then
-                echo "D %{+u}$BATPERC%{-u} / $BATPERC1"
-		elif [ "$CHARGING1" = "Charging" ] ; then
-                echo "D $BATPERC / %{+u}$BATPERC1%{-u}"
-		else
-                echo "D $BATPERC / $BATPERC1"
-		fi
-                        else
-                echo "D $BATPERC / $BATPERC1"
-                        if [ $BATPERC -lt 15 ] ; then
-                                echo "D%{B$urgent}WARDING $BATPERC $BATPERC1"
-                        fi
-        fi
+ BATSTRING=$(cat /sys/class/power_supply/BAT*/status /sys/class/power_supply/BAT*/capacity)
+ echo $BATSTRING | while read -r CHARG CHARG1 PERC PERC1; do
+ case $BATSTRING in
+  Discharging*)
+   echo "D %{U#bcbcbc}%{+o}$PERC%{-o} / $PERC1"
+   ;;
+  *Discharging*)
+   echo "D $PERC / %{U#bcbcbc}%{+o}$PERC1%{-o}"
+  ;;
+  Charging*)
+   echo "D %{+u}$PERC%{-u} / $PERC1"
+  ;;
+  *Charging*)
+   echo "D $PERC / %{+u}$PERC1%{-u}"
+  ;;
+  Unknown*Unknown*)
+   echo "D $PERC / $PERC1"
+  ;;
+ esac
+done
 }
 
 Bat(){
@@ -198,7 +200,7 @@ while read -r line ; do
                         ;;
                 D*)
                         # battery
-                        bat="${line#?}"
+                        bat="${line#?}%{U$FG_PANEL}"
                         ;;
                 V*)
                         # volume
@@ -230,7 +232,7 @@ while read -r line ; do
                 ac_adapter*)
 			sleep 1
 			Bat_once
-			sleep 5
+			sleep 10
 			Bat_once
                         ;;
                 button/mute*)
@@ -262,13 +264,13 @@ done
 }
 
 acpi_listen | Acpiparse &
+sleep 2 && xdo above -t $(xdo id -n root) $(xdo id -n lemonbar) &
 
 bar < "$PANEL_FIFO" \
         | lemonbar -p -a 32 -u 2 \
                 -B "$BG_PANEL" \
                 -F "$FG_PANEL" \
 		-U "$FG_PANEL" \
-                -f "$FONT" \
-		-f "shmalebcollection:size=12" \
+                -o -1 -f "$FONT" \
+		-o 0 -f "shmalebcollection:size=12" \
                 -g "$GEOMETRY" \
- sleep 2 && xdo above -t $(xdo id -n root) $(xdo id -n lemonbar) &
