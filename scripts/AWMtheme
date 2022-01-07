@@ -58,8 +58,8 @@ done
 }
 
 check_elements(){
-wal -i $AWMdir/themes/"$thistheme"/elements/wallpaper.*
-echo -e "wal -R &" >> $AWMdir/scripts/AWMstart
+feh --bg-scale $AWMdir/themes/$thistheme/elements/wallpaper.*
+echo "~/.fehbg &" >> $AWMdir/scripts/AWMstart
 }
 
 check_scripts(){
